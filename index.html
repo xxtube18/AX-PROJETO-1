@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANALYST PRO - LOGO FIX</title>
+    <title>ANALYST PRO V18 - VELOCIDADE & CONTRASTE</title>
     <style>
         :root { --bg: #020205; --panel: #0b0b15; --cyan: #00f2ff; --neon: #39ff14; --border: #1a1a2e; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; overflow: hidden; }
@@ -25,17 +25,18 @@
         .btn-safe { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
         .btn-reset { background: #440000; color: #ffaaaa; margin-top: auto; }
         
-        /* BOTÃO DE LOGO GRANDE */
         .btn-add-logo { background: #005f73; color: #fff; border: 1px solid var(--cyan); font-size: 10px; margin-top: 5px; }
-        .btn-add-logo:hover { background: var(--cyan); color: #000; }
 
         input, select { width: 100%; padding: 8px; background: #000; border: 1px solid #333; color: #fff; border-radius: 4px; box-sizing: border-box; }
         label { font-size: 10px; color: #aaa; display: block; margin: 10px 0 5px; text-transform: uppercase; }
 
+        /* MARCADOR COM FUNDO BRANCO PARA LOGOS PRETAS */
         .team-marker { 
-            position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 2.5px solid; 
-            background-color: #000; background-size: contain; background-repeat: no-repeat; background-position: center; z-index: 15;
+            position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid; 
+            background-color: #FFFFFF; /* Fundo branco para destacar logos escuras */
+            background-size: 85%; background-repeat: no-repeat; background-position: center; z-index: 15;
             display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 15px rgba(255,255,255,0.3);
         }
 
         .timeline-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 85%; background: rgba(10, 10, 20, 0.95); padding: 15px 25px; border-radius: 40px; border: 1px solid var(--cyan); z-index: 100; display: flex; align-items: center; gap: 20px; }
@@ -63,7 +64,7 @@
             <label>TIME SELECIONADO</label>
             <select id="team-select"></select>
             <label>TEMPO DO PONTO (S)</label>
-            <input type="number" id="m-time" value="0">
+            <input type="number" id="m-time" value="0" placeholder="Ex: 60 para 1 min">
         </div>
 
         <div class="control-box">
@@ -89,31 +90,28 @@
         <div class="timeline-box">
             <span id="timer-txt" style="font-family: monospace; font-size: 16px; color: var(--cyan);">00:00</span>
             <input type="range" id="timeline" min="0" max="1200" value="0" oninput="manualSeek(this.value)">
-            <button id="play-btn" class="btn-pause" onclick="togglePlay()">⏸ PAUSE</button>
+            <button id="play-btn" class="btn-pause" onclick="togglePlay()">▶ PLAY</button>
         </div>
     </div>
 
     <div class="sidebar">
         <h3 style="font-size: 14px; margin: 0 0 10px 0;">Times & Logos</h3>
-        
-        <label>DIGITE OS NOMES (SEPARADOS POR VÍRGULA)</label>
+        <label>NOMES (SEPARADOS POR VÍRGULA)</label>
         <input type="text" id="teams-input" value="LOUD, FLUXO, PAIN" onchange="updateTeams()">
-        
         <div id="v-list" style="flex:1; overflow-y:auto; margin-top:15px;"></div>
-        
         <button style="background:#333; color:#ccc; margin-top:10px" onclick="undoLast()">DESFAZER (Z)</button>
     </div>
 </div>
 
 <script>
-    let teamData = {}, teamLogos = {}, playing = false, currentTime = 0, lastTimestamp = 0, safePos = null, currentMode = 'route';
+    let teamData = {}, teamLogos = {}, playing = false, currentTime = 0, lastTimestamp = 0, currentMode = 'route';
     const neonColors = ['#00ffff','#ff00ff','#39ff14','#ffff00','#ff3131','#ff8c00','#00ffcc','#bc13fe','#8eff00','#0070ff','#ff007f','#ffffff'];
     
     const cH = document.getElementById('c-heat'), cL = document.getElementById('c-lines'), cS = document.getElementById('c-safe');
     const ctxH = cH.getContext('2d'), ctxL = cL.getContext('2d'), ctxS = cS.getContext('2d'), mapArea = document.getElementById('map-area');
 
     window.onload = () => {
-        const saved = JSON.parse(localStorage.getItem('analyst_pro_v17') || '{}');
+        const saved = JSON.parse(localStorage.getItem('analyst_pro_v18') || '{}');
         teamData = saved.teamData || {}; teamLogos = saved.teamLogos || {}; 
         if(saved.bg) mapArea.style.backgroundImage = `url('${saved.bg}')`;
         updateTeams(); resize(); updateDarkness(85);
@@ -132,22 +130,17 @@
         const names = document.getElementById('teams-input').value.split(',').map(t => t.trim());
         const tSel = document.getElementById('team-select'), vList = document.getElementById('v-list');
         tSel.innerHTML = ''; vList.innerHTML = '';
-        
         names.forEach((t, i) => {
             if(!t) return;
             const col = neonColors[i % neonColors.length];
             tSel.innerHTML += `<option value="${t}">${t}</option>`;
-            
-            // CRIAÇÃO DO ITEM DE TIME COM BOTÃO GRANDE
             vList.innerHTML += `
                 <div class="team-item" style="border-color:${col}">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="color:${col}; font-weight:bold;">${t}</span>
                         <input type="checkbox" checked id="v-${t}" onchange="forceUpdate()">
                     </div>
-                    <button class="btn-add-logo" onclick="document.getElementById('file-${t}').click()">
-                        ADD LOGO: ${t}
-                    </button>
+                    <button class="btn-add-logo" onclick="document.getElementById('file-${t}').click()">ADD LOGO: ${t}</button>
                     <input type="file" id="file-${t}" style="display:none" onchange="importLogo(this, '${t}')">
                 </div>`;
             if(!teamData[t]) teamData[t] = [];
@@ -158,7 +151,7 @@
     function importLogo(input, t) {
         if (input.files[0]) {
             const reader = new FileReader();
-            reader.onload = e => { teamLogos[t] = e.target.result; save(); forceUpdate(); alert('Logo de ' + t + ' carregada!'); };
+            reader.onload = e => { teamLogos[t] = e.target.result; save(); forceUpdate(); };
             reader.readAsDataURL(input.files[0]);
         }
     }
@@ -166,24 +159,21 @@
     function handleMapClick(e) {
         const r = mapArea.getBoundingClientRect();
         const x = ((e.clientX - r.left) / r.width) * 100, y = ((e.clientY - r.top) / r.height) * 100;
-        if(currentMode === 'safe') {
-            safePos = {x, y}; currentMode = 'route';
-            document.querySelector('.btn-safe').style.background = "transparent";
-        } else {
-            const team = document.getElementById('team-select').value;
-            const t = parseFloat(document.getElementById('m-time').value);
-            teamData[team].push({x, y, time: t});
-            teamData[team].sort((a,b) => a.time - b.time);
-            currentTime = t;
-        }
+        const team = document.getElementById('team-select').value;
+        const t = parseFloat(document.getElementById('m-time').value);
+        
+        teamData[team].push({x, y, time: t});
+        teamData[team].sort((a,b) => a.time - b.time);
+        
+        // Atualiza o tempo atual para onde você clicou para facilitar a marcação
+        currentTime = t;
+        document.getElementById('timeline').value = t;
         save(); forceUpdate();
     }
 
     function forceUpdate() {
-        ctxH.clearRect(0, 0, cH.width, cH.height);
         ctxL.clearRect(0,0,cL.width, cL.height);
         const glow = document.getElementById('neon-power').value;
-        
         Object.keys(teamData).forEach((t, i) => {
             if(!document.getElementById(`v-${t}`)?.checked || teamData[t].length < 1) return;
             const col = neonColors[i % neonColors.length];
@@ -207,9 +197,11 @@
             const col = neonColors[i % neonColors.length];
             const div = document.createElement('div');
             div.className = 'team-marker';
-            div.style = `left:${pos.x}%; top:${pos.y}%; width:40px; height:40px; border-color:${col}; box-shadow:0 0 15px ${col};`;
+            div.style = `left:${pos.x}%; top:${pos.y}%; width:45px; height:45px; border-color:${col}; box-shadow:0 0 15px ${col};`;
+            
             if(teamLogos[t]) div.style.backgroundImage = `url('${teamLogos[t]}')`;
-            else div.innerHTML = `<span style="color:${col}; font-size:12px;">${t[0]}</span>`;
+            else div.innerHTML = `<span style="color:#000; font-size:14px; font-weight:bold;">${t[0]}</span>`;
+            
             layer.appendChild(div);
         });
         updateTimelineUI();
@@ -228,13 +220,19 @@
     }
 
     function togglePlay() {
-        playing = !playing; document.getElementById('play-btn').innerText = playing ? "⏸ PAUSE" : "▶ PLAY";
+        playing = !playing; 
+        document.getElementById('play-btn').innerText = playing ? "⏸ PAUSE" : "▶ PLAY";
         if(playing) { lastTimestamp = performance.now(); gameLoop(); }
     }
 
     function gameLoop() {
         if(!playing) return;
-        const now = performance.now(); currentTime += (now - lastTimestamp) / 1000; lastTimestamp = now;
+        const now = performance.now(); 
+        // Aumenta o tempo em 1 segundo por segundo real
+        currentTime += (now - lastTimestamp) / 1000; 
+        lastTimestamp = now;
+        
+        if(currentTime > 1200) { playing = false; togglePlay(); }
         forceUpdate(); requestAnimationFrame(gameLoop);
     }
 
@@ -244,10 +242,10 @@
         const m = Math.floor(currentTime/60).toString().padStart(2,'0'), s = Math.floor(currentTime%60).toString().padStart(2,'0');
         document.getElementById('timer-txt').innerText = `${m}:${s}`;
     }
-    function save() { localStorage.setItem('analyst_pro_v17', JSON.stringify({ teamData, teamLogos, bg: mapArea.style.backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/, '$1') })); }
+    function save() { localStorage.setItem('analyst_pro_v18', JSON.stringify({ teamData, teamLogos, bg: mapArea.style.backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/, '$1') })); }
     function loadMap(i){ if(i.files[0]){ const r=new FileReader(); r.onload=e=>{mapArea.style.backgroundImage=`url('${e.target.result}')`;save();setTimeout(resize, 100);}; r.readAsDataURL(i.files[0]);}}
     function clearData() { if(confirm("Limpar tudo?")) { localStorage.clear(); location.reload(); } }
-    function setMode(m) { currentMode = m; }
+    function undoLast() { const t = document.getElementById('team-select').value; teamData[t].pop(); save(); forceUpdate(); }
 </script>
 </body>
 </html>
