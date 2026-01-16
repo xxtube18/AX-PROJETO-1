@@ -3,90 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANALYST PRO - IMPORT LOGO FIX</title>
+    <title>ANALYST PRO - REPARADO</title>
     <style>
         :root { --bg: #020205; --panel: #0b0b15; --cyan: #00f2ff; --neon: #39ff14; --border: #1a1a2e; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; overflow: hidden; }
+        
+        /* Layout idêntico à Foto 1 */
         .main-container { display: flex; width: 100%; height: 97vh; gap: 10px; }
         .sidebar { width: 300px; background: var(--panel); padding: 15px; border-radius: 12px; border: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .map-wrapper { flex: 1; position: relative; background: #000; border: 2px solid #111; overflow: hidden; border-radius: 8px; }
+        
         #map-area { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; position: relative; cursor: crosshair; }
         #map-darkener { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); pointer-events: none; z-index: 1; }
         canvas { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; }
-        #c-heat { z-index: 2; } #c-lines { z-index: 3; } #c-safe { z-index: 4; }
-        #p-layer { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 10; pointer-events: none; }
         
-        /* Marcador Estilizado */
+        /* Camadas de Canvas */
+        #c-heat { z-index: 2; } 
+        #c-lines { z-index: 3; }
+        #c-safe { z-index: 4; }
+        #p-layer { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 10; pointer-events: none; }
+
+        /* Estilo dos Botões da Foto 1 */
+        .control-box { background: #121225; padding: 12px; border-radius: 8px; border: 1px solid #1d1d3d; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; transition: 0.2s; }
+        .btn-map { background: var(--cyan); color: #000; margin-bottom: 10px; }
+        .btn-safe { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); margin-top: 10px; }
+        .btn-reset { background: #440000; color: #ffaaaa; margin-top: auto; }
+        
+        input, select { width: 100%; padding: 8px; background: #05050a; border: 1px solid #222; color: #fff; border-radius: 4px; box-sizing: border-box; }
+        label { font-size: 10px; color: #aaa; display: block; margin: 10px 0 5px; text-transform: uppercase; }
+
+        /* Marcador com Fundo Sólido para Nitidez */
         .team-marker { 
             position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 2.5px solid; 
-            background-color: #080810; background-size: contain; background-repeat: no-repeat; background-position: center; z-index: 15;
+            background-color: #000; background-size: contain; background-repeat: no-repeat; background-position: center; z-index: 15;
+            display: flex; align-items: center; justify-content: center;
         }
 
-        .control-box { background: #121225; padding: 12px; border-radius: 8px; border: 1px solid #1d1d3d; }
-        button { width: 100%; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 10px; text-transform: uppercase; }
-        input, select { width: 100%; padding: 8px; background: #05050a; border: 1px solid #222; color: #fff; border-radius: 4px; }
-        label { font-size: 10px; color: #aaa; display: block; margin: 10px 0 5px; text-transform: uppercase; }
-        
-        .team-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: #161625; padding: 5px 8px; border-radius: 5px; }
-        .btn-upload { background: #333; color: #fff; width: 30px; height: 30px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 4px; font-size: 14px; }
-        
-        .timeline-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 85%; background: rgba(10, 10, 20, 0.95); padding: 12px 25px; border-radius: 40px; border: 1px solid var(--cyan); z-index: 100; display: flex; align-items: center; gap: 20px; }
-        #timeline { flex: 1; accent-color: var(--cyan); }
+        /* Linha do Tempo da Foto 1 */
+        .timeline-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 85%; background: rgba(10, 10, 20, 0.95); padding: 15px 25px; border-radius: 40px; border: 1px solid var(--cyan); z-index: 100; display: flex; align-items: center; gap: 20px; }
+        #timeline { flex: 1; accent-color: var(--cyan); height: 8px; cursor: pointer; }
+        .btn-pause { background: var(--neon); color: #000; width: 120px; border-radius: 5px; }
+
+        /* Lista de Times com Importação de Logo */
+        .team-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .upload-btn { background: #333; color: #fff; width: 25px; height: 25px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <div class="sidebar">
-            <button style="background:var(--cyan); color:#000" onclick="document.getElementById('map-up').click()">🖼️ MAPA</button>
-            <input type="file" id="map-up" style="display:none" onchange="loadMap(this)">
-            
-            <div class="control-box">
-                <label>🔥 HEATMAP</label>
-                <input type="checkbox" id="heat-toggle" checked onchange="forceUpdate()">
-                <label>Intensidade</label>
-                <input type="range" id="heat-int" min="10" max="150" value="80" oninput="forceUpdate()">
-            </div>
 
-            <div class="control-box">
-                <label>Time Selecionado</label>
-                <select id="team-select"></select>
-                <label>Tempo (s)</label>
-                <input type="number" id="m-time" value="0" step="5">
+<div class="main-container">
+    <div class="sidebar">
+        <button class="btn-map" onclick="document.getElementById('map-up').click()">🖼️ CARREGAR MAPA</button>
+        <input type="file" id="map-up" style="display:none" onchange="loadMap(this)">
+        
+        <div class="control-box">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label style="margin:0">🔥 MAPA DE CALOR</label>
+                <input type="checkbox" id="heat-toggle" checked onchange="forceUpdate()" style="width:20px">
             </div>
-
-            <div class="control-box">
-                <label>Poder do Neon</label>
-                <input type="range" id="neon-power" min="5" max="100" value="60" oninput="forceUpdate()">
-                <label>Tamanho Logo</label>
-                <input type="range" id="logo-size" min="20" max="80" value="40" oninput="forceUpdate()">
-            </div>
-
-            <button id="btn-safe" style="background:#222; color:var(--cyan); border:1px solid var(--cyan)" onclick="setMode('safe')">📍 MARCAR SAFE</button>
-            <button style="background:#440000; color:#ffaaaa; margin-top: auto;" onclick="clearData()">⚠️ RESETAR</button>
+            <label>INTENSIDADE</label>
+            <input type="range" id="heat-int" min="10" max="150" value="80" oninput="forceUpdate()">
+            <label>RAIO DE EXPLOSÃO</label>
+            <input type="range" id="heat-radius" min="10" max="150" value="50" oninput="forceUpdate()">
         </div>
 
-        <div class="map-wrapper">
-            <div id="map-area" onclick="handleMapClick(event)">
-                <div id="map-darkener"></div>
-                <canvas id="c-heat"></canvas>
-                <canvas id="c-lines"></canvas>
-                <canvas id="c-safe"></canvas>
-                <div id="p-layer"></div>
-            </div>
-            <div class="timeline-box">
-                <span id="timer-txt" style="color:var(--cyan); font-family:monospace;">00:00</span>
-                <input type="range" id="timeline" min="0" max="1200" value="0" oninput="manualSeek(this.value)">
-                <button id="play-btn" style="width: 80px; background:var(--neon); color:#000;" onclick="togglePlay()">▶</button>
-            </div>
+        <div class="control-box">
+            <label>TIME SELECIONADO</label>
+            <select id="team-select"></select>
+            <label>TEMPO DO PONTO (S)</label>
+            <input type="number" id="m-time" value="0">
         </div>
 
-        <div class="sidebar">
-            <h3>Times & Logos</h3>
-            <div id="v-list" style="flex:1; overflow-y:auto;"></div>
-            <input type="text" id="teams-input" value="LOUD, FLUXO, PAIN, LOS, RED, KEYD, FURIA, VK, E1, MIBR, NET, SX" onchange="updateTeams()">
-            <button style="background:#333; color:#ccc; margin-top:10px" onclick="undoLast()">DESFAZER (Z)</button>
+        <div class="control-box">
+            <label>BRILHO NEON</label>
+            <input type="range" id="neon-power" min="0" max="100" value="60" oninput="forceUpdate()">
+            <label>ESCURIDÃO MAPA</label>
+            <input type="range" id="map-dark" min="0" max="100" value="85" oninput="updateDarkness(this.value)">
+            <label>TAMANHO SAFE</label>
+            <input type="range" id="safe-size" min="10" max="500" value="150" oninput="forceUpdate()">
+        </div>
+
+        <button class="btn-safe" onclick="setMode('safe')">📍 MARCAR SAFE (S)</button>
+        <button class="btn-reset" onclick="clearData()">⚠️ RESETAR</button>
+    </div>
+
+    <div class="map-wrapper">
+        <div id="map-area" onclick="handleMapClick(event)">
+            <div id="map-darkener"></div>
+            <canvas id="c-heat"></canvas>
+            <canvas id="c-lines"></canvas>
+            <canvas id="c-safe"></canvas>
+            <div id="p-layer"></div>
+        </div>
+
+        <div class="timeline-box">
+            <span id="timer-txt" style="font-family: monospace; font-size: 16px; color: var(--cyan);">20:00</span>
+            <input type="range" id="timeline" min="0" max="1200" value="0" oninput="manualSeek(this.value)">
+            <button id="play-btn" class="btn-pause" onclick="togglePlay()">⏸ PAUSE</button>
         </div>
     </div>
+
+    <div class="sidebar">
+        <h3 style="font-size: 14px; margin: 0 0 10px 0;">Linhas das Equipes</h3>
+        <div id="v-list" style="flex:1; overflow-y:auto;"></div>
+        
+        <label>NOMES DOS TIMES</label>
+        <input type="text" id="teams-input" value="LOUD, FLUXO, PAIN, LOS, RED, KEYD, FURIA, VK, E1, MIBR, NET, A7" onchange="updateTeams()">
+        <button style="background:#333; color:#ccc; margin-top:10px" onclick="undoLast()">DESFAZER (Z)</button>
+    </div>
+</div>
 
 <script>
     let teamData = {}, teamLogos = {}, playing = false, currentTime = 0, lastTimestamp = 0, safePos = null, currentMode = 'route';
@@ -96,12 +122,10 @@
     const ctxH = cH.getContext('2d'), ctxL = cL.getContext('2d'), ctxS = cS.getContext('2d'), mapArea = document.getElementById('map-area');
 
     window.onload = () => {
-        const saved = JSON.parse(localStorage.getItem('analyst_pro_v16_fix') || '{}');
-        teamData = saved.teamData || {}; 
-        teamLogos = saved.teamLogos || {};
-        safePos = saved.safePos || null;
+        const saved = JSON.parse(localStorage.getItem('analyst_pro_v16_final') || '{}');
+        teamData = saved.teamData || {}; teamLogos = saved.teamLogos || {}; safePos = saved.safePos || null;
         if(saved.bg) mapArea.style.backgroundImage = `url('${saved.bg}')`;
-        updateTeams(); resize();
+        updateTeams(); resize(); updateDarkness(85);
     };
 
     function resize() {
@@ -111,6 +135,8 @@
         forceUpdate();
     }
 
+    function updateDarkness(v) { document.getElementById('map-darkener').style.background = `rgba(0,0,0,${v/100})`; }
+
     function updateTeams() {
         const names = document.getElementById('teams-input').value.split(',').map(t => t.trim());
         const tSel = document.getElementById('team-select'), vList = document.getElementById('v-list');
@@ -119,30 +145,23 @@
             if(!t) return;
             const col = neonColors[i % neonColors.length];
             tSel.innerHTML += `<option value="${t}">${t}</option>`;
-            
             vList.innerHTML += `
-                <div class="team-row">
-                    <div style="color:${col}; font-size:11px;">
+                <div class="team-item">
+                    <div style="color:${col}; font-size:12px; font-weight:bold;">
                         <input type="checkbox" checked id="v-${t}" onchange="forceUpdate()"> ${t}
                     </div>
-                    <button class="btn-upload" onclick="triggerLogo('${t}')">📁</button>
-                    <input type="file" id="input-${t}" style="display:none" onchange="importLogo(this, '${t}')">
+                    <button class="upload-btn" onclick="document.getElementById('ld-${t}').click()">📁</button>
+                    <input type="file" id="ld-${t}" style="display:none" onchange="importLogo(this, '${t}')">
                 </div>`;
             if(!teamData[t]) teamData[t] = [];
         });
         forceUpdate();
     }
 
-    function triggerLogo(t) { document.getElementById(`input-${t}`).click(); }
-
     function importLogo(input, t) {
         if (input.files[0]) {
             const reader = new FileReader();
-            reader.onload = e => {
-                teamLogos[t] = e.target.result;
-                save();
-                forceUpdate();
-            };
+            reader.onload = e => { teamLogos[t] = e.target.result; save(); forceUpdate(); };
             reader.readAsDataURL(input.files[0]);
         }
     }
@@ -152,7 +171,7 @@
         const x = ((e.clientX - r.left) / r.width) * 100, y = ((e.clientY - r.top) / r.height) * 100;
         if(currentMode === 'safe') {
             safePos = {x, y}; currentMode = 'route';
-            document.getElementById('btn-safe').style.background = "#222";
+            document.querySelector('.btn-safe').style.background = "transparent";
         } else {
             const team = document.getElementById('team-select').value;
             const t = parseFloat(document.getElementById('m-time').value);
@@ -160,40 +179,32 @@
             teamData[team].sort((a,b) => a.time - b.time);
             currentTime = t;
             document.getElementById('timeline').value = t;
-            document.getElementById('m-time').value = t + 5;
         }
         save(); forceUpdate();
     }
 
-    function drawHeatmap() {
-        ctxH.clearRect(0, 0, cH.width, cH.height);
-        if(!document.getElementById('heat-toggle').checked) return;
-        const radius = 50, intensity = parseFloat(document.getElementById('heat-int').value) / 100;
-        ctxH.globalCompositeOperation = 'screen';
-        Object.keys(teamData).forEach(t => {
-            teamData[t].forEach(p => {
-                const px = (p.x / 100) * cH.width, py = (p.y / 100) * cH.height;
-                const grad = ctxH.createRadialGradient(px, py, 0, px, py, radius);
-                grad.addColorStop(0, `rgba(255, 0, 70, ${intensity})`); grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-                ctxH.fillStyle = grad; ctxH.beginPath(); ctxH.arc(px, py, radius, 0, Math.PI * 2); ctxH.fill();
-            });
-        });
-    }
-
     function forceUpdate() {
-        drawHeatmap();
-        ctxL.clearRect(0,0,cL.width, cL.height);
-        ctxS.clearRect(0,0,cS.width, cS.height);
-        const glow = document.getElementById('neon-power').value;
-        if(safePos) {
-            const rad = parseFloat(document.getElementById('safe-size')?.value || 150);
-            ctxS.shadowBlur = glow; ctxS.shadowColor = "#00f2ff"; ctxS.strokeStyle = "#00f2ff"; ctxS.lineWidth = 4;
-            ctxS.beginPath(); ctxS.arc((safePos.x/100)*cS.width, (safePos.y/100)*cS.height, rad, 0, Math.PI*2); ctxS.stroke();
+        // Heatmap
+        ctxH.clearRect(0, 0, cH.width, cH.height);
+        if(document.getElementById('heat-toggle').checked) {
+            const rad = document.getElementById('heat-radius').value;
+            const intense = document.getElementById('heat-int').value / 100;
+            ctxH.globalCompositeOperation = 'screen';
+            Object.values(teamData).flat().forEach(p => {
+                const px = (p.x/100)*cH.width, py = (p.y/100)*cH.height;
+                const g = ctxH.createRadialGradient(px, py, 0, px, py, rad);
+                g.addColorStop(0, `rgba(255, 100, 0, ${intense})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctxH.fillStyle = g; ctxH.beginPath(); ctxH.arc(px, py, rad, 0, Math.PI*2); ctxH.fill();
+            });
         }
+
+        // Lines
+        ctxL.clearRect(0,0,cL.width, cL.height);
+        const glow = document.getElementById('neon-power').value;
         Object.keys(teamData).forEach((t, i) => {
-            if(!document.getElementById(`v-${t}`)?.checked || teamData[t].length < 1) return;
+            if(!document.getElementById(`v-${t}`)?.checked || teamData[t].length < 2) return;
             const col = neonColors[i % neonColors.length];
-            ctxL.shadowBlur = glow / 1.5; ctxL.shadowColor = col; ctxL.strokeStyle = col; ctxL.lineWidth = 3.5;
+            ctxL.shadowBlur = glow; ctxL.shadowColor = col; ctxL.strokeStyle = col; ctxL.lineWidth = 3;
             ctxL.beginPath();
             teamData[t].forEach((p, idx) => {
                 const px = (p.x/100)*cL.width, py = (p.y/100)*cL.height;
@@ -201,36 +212,42 @@
             });
             ctxL.stroke();
         });
+
+        // Safe
+        ctxS.clearRect(0,0,cS.width, cS.height);
+        if(safePos) {
+            const sRad = document.getElementById('safe-size').value;
+            ctxS.shadowBlur = 15; ctxS.shadowColor = var(--cyan); ctxS.strokeStyle = var(--cyan); ctxS.lineWidth = 3;
+            ctxS.beginPath(); ctxS.arc((safePos.x/100)*cS.width, (safePos.y/100)*cS.height, sRad, 0, Math.PI*2); ctxS.stroke();
+        }
         renderMarkers();
     }
 
     function renderMarkers() {
         const layer = document.getElementById('p-layer');
         layer.innerHTML = '';
-        const size = document.getElementById('logo-size').value;
-        const glow = document.getElementById('neon-power').value;
-        Object.keys(teamData).forEach((tName, i) => {
-            if(!document.getElementById(`v-${tName}`)?.checked) return;
-            const pos = interpolate(teamData[tName], currentTime);
-            if(pos) {
-                const col = neonColors[i % neonColors.length];
-                const div = document.createElement('div');
-                div.className = 'team-marker';
-                div.style = `left:${pos.x}%; top:${pos.y}%; width:${size}px; height:${size}px; border-color:${col}; box-shadow:0 0 ${glow/2}px ${col};`;
-                if(teamLogos[tName]) div.style.backgroundImage = `url('${teamLogos[tName]}')`;
-                else div.innerHTML = `<span style="color:${col}; font-size:${size/2}px;">${tName[0]}</span>`;
-                layer.appendChild(div);
-            }
+        const size = 35; // Tamanho fixo original
+        Object.keys(teamData).forEach((t, i) => {
+            if(!document.getElementById(`v-${t}`)?.checked) return;
+            const pts = teamData[t];
+            if(!pts.length) return;
+            const pos = interpolate(pts, currentTime);
+            const col = neonColors[i % neonColors.length];
+            const div = document.createElement('div');
+            div.className = 'team-marker';
+            div.style = `left:${pos.x}%; top:${pos.y}%; width:${size}px; height:${size}px; border-color:${col}; box-shadow:0 0 15px ${col};`;
+            if(teamLogos[t]) div.style.backgroundImage = `url('${teamLogos[t]}')`;
+            else div.innerHTML = `<span style="color:${col}; font-size:12px;">${t[0]}</span>`;
+            layer.appendChild(div);
         });
         updateTimelineUI();
     }
 
     function interpolate(pts, t) {
-        if(!pts.length) return null;
         if(t <= pts[0].time) return pts[0];
         if(t >= pts[pts.length-1].time) return pts[pts.length-1];
         for(let i=0; i<pts.length-1; i++){
-            if(t >= pts[i].time && t <= pts[i+1].time) {
+            if(t >= pts[i].time && t <= pts[i+1].time){
                 const pct = (t - pts[i].time) / (pts[i+1].time - pts[i].time);
                 return { x: pts[i].x + (pts[i+1].x - pts[i].x)*pct, y: pts[i].y + (pts[i+1].y - pts[i].y)*pct };
             }
@@ -239,7 +256,7 @@
     }
 
     function togglePlay() {
-        playing = !playing; document.getElementById('play-btn').innerText = playing ? "⏸" : "▶";
+        playing = !playing; document.getElementById('play-btn').innerText = playing ? "⏸ PAUSE" : "▶ PLAY";
         if(playing) { lastTimestamp = performance.now(); gameLoop(); }
     }
 
@@ -256,15 +273,11 @@
         const m = Math.floor(currentTime/60).toString().padStart(2,'0'), s = Math.floor(currentTime%60).toString().padStart(2,'0');
         document.getElementById('timer-txt').innerText = `${m}:${s}`;
     }
-    function setMode(m) { currentMode = m; }
-    function undoLast() { 
-        const t = document.getElementById('team-select').value; 
-        if(teamData[t]?.length) { teamData[t].pop(); save(); forceUpdate(); } 
-    }
-    function save() { localStorage.setItem('analyst_pro_v16_fix', JSON.stringify({ teamData, teamLogos, safePos, bg: mapArea.style.backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/, '$1') })); }
-    function loadMap(i){ if(i.files[0]){ const r=new FileReader(); r.onload=e=>{mapArea.style.backgroundImage=`url('${e.target.result}')`;save();resize();}; r.readAsDataURL(i.files[0]);}}
-    function clearData() { if(confirm("RESET?")) { localStorage.clear(); location.reload(); } }
-    window.onresize = resize;
+    function setMode(m) { currentMode = m; if(m==='safe') document.querySelector('.btn-safe').style.background = "var(--cyan)"; }
+    function undoLast() { const t = document.getElementById('team-select').value; teamData[t]?.pop(); save(); forceUpdate(); }
+    function save() { localStorage.setItem('analyst_pro_v16_final', JSON.stringify({ teamData, teamLogos, safePos, bg: mapArea.style.backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/, '$1') })); }
+    function loadMap(i){ if(i.files[0]){ const r=new FileReader(); r.onload=e=>{mapArea.style.backgroundImage=`url('${e.target.result}')`;save();setTimeout(resize, 100);}; r.readAsDataURL(i.files[0]);}}
+    function clearData() { if(confirm("Limpar tudo?")) { localStorage.clear(); location.reload(); } }
 </script>
 </body>
 </html>
