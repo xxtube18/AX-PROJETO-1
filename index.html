@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANALYST PRO - TEMPO AUTO-SOMA</title>
+    <title>ANALYST PRO - REPLAY FIX</title>
     <style>
         :root { --bg: #020205; --panel: #0b0b15; --cyan: #00f2ff; --neon: #39ff14; --border: #1a1a2e; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; overflow: hidden; }
@@ -18,13 +18,13 @@
         .control-box { background: #121225; padding: 12px; border-radius: 8px; border: 1px solid #1d1d3d; }
         button { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; margin-bottom: 5px; }
         .btn-map { background: var(--cyan); color: #000; }
-        .btn-safe { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
         .btn-reset { background: #440000; color: #ffaaaa; margin-top: auto; }
         .btn-add-logo { background: #005f73; color: #fff; border: 1px solid var(--cyan); font-size: 10px; margin-top: 5px; }
 
         input, select { width: 100%; padding: 8px; background: #000; border: 1px solid #333; color: #fff; border-radius: 4px; box-sizing: border-box; }
         label { font-size: 10px; color: #aaa; display: block; margin: 10px 0 5px; text-transform: uppercase; }
 
+        /* MARCADOR COM FUNDO BRANCO PARA LOGO APARECER */
         .team-marker { 
             position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid; 
             background-color: #FFFFFF; background-size: 85%; background-repeat: no-repeat; background-position: center; z-index: 15;
@@ -43,22 +43,28 @@
     <div class="sidebar">
         <button class="btn-map" onclick="document.getElementById('map-up').click()">🖼️ CARREGAR MAPA</button>
         <input type="file" id="map-up" style="display:none" onchange="loadMap(this)">
+        
         <div class="control-box">
-            <label>TEMPO DO PONTO (S) - AUTO INCREMENTO</label>
+            <label>TEMPO ATUAL DO PONTO (S)</label>
             <input type="number" id="m-time" value="0">
-            <label>INTERVALO DE SOMA (S)</label>
-            <input type="number" id="m-step" value="5">
-            <label>TIME SELECIONADO</label>
-            <select id="team-select"></select>
+            <label>QUANTO SOMAR POR CLIQUE?</label>
+            <input type="number" id="m-step" value="10">
+            <label>VELOCIDADE DO REPLAY</label>
+            <select id="playback-speed">
+                <option value="0.5">0.5x (Lento)</option>
+                <option value="1" selected>1x (Normal)</option>
+                <option value="2">2x (Rápido)</option>
+            </select>
         </div>
+
         <div class="control-box">
-            <label>BRILHO NEON</label>
-            <input type="range" id="neon-power" min="0" max="100" value="60" oninput="forceUpdate()">
             <label>ESCURIDÃO MAPA</label>
             <input type="range" id="map-dark" min="0" max="100" value="85" oninput="updateDarkness(this.value)">
+            <label>BRILHO NEON</label>
+            <input type="range" id="neon-power" min="0" max="100" value="60" oninput="forceUpdate()">
         </div>
-        <button class="btn-safe" onclick="setMode('safe')">📍 MARCAR SAFE</button>
-        <button class="btn-reset" onclick="clearData()">⚠️ RESETAR</button>
+
+        <button class="btn-reset" onclick="clearData()">⚠️ RESETAR TUDO</button>
     </div>
 
     <div class="map-wrapper">
@@ -75,10 +81,14 @@
     </div>
 
     <div class="sidebar">
-        <h3 style="font-size: 14px; margin: 0;">Times & Logos</h3>
+        <h3 style="font-size: 14px; margin: 0;">Configurar Times</h3>
+        <label>NOMES (SEPARADOS POR VÍRGULA)</label>
         <input type="text" id="teams-input" value="LOUD, FLUXO, PAIN" onchange="updateTeams()">
-        <div id="v-list" style="flex:1; overflow-y:auto; margin-top:10px;"></div>
-        <button style="background:#333; color:#ccc;" onclick="undoLast()">DESFAZER (Z)</button>
+        <label>SELECIONE O TIME PARA MARCAR</label>
+        <select id="team-select" style="margin-bottom:10px; border: 1px solid var(--cyan)"></select>
+        
+        <div id="v-list" style="flex:1; overflow-y:auto;"></div>
+        <button style="background:#333; color:#ccc;" onclick="undoLast()">DESFAZER ÚLTIMO PONTO (Z)</button>
     </div>
 </div>
 
@@ -110,7 +120,7 @@
             vList.innerHTML += `
                 <div class="team-item" style="border-color:${col}">
                     <span style="color:${col}; font-weight:bold;">${t}</span>
-                    <button class="btn-add-logo" onclick="document.getElementById('file-${t}').click()">ADD LOGO: ${t}</button>
+                    <button class="btn-add-logo" onclick="document.getElementById('file-${t}').click()">CARREGAR LOGO</button>
                     <input type="file" id="file-${t}" style="display:none" onchange="importLogo(this, '${t}')">
                 </div>`;
             if(!teamData[t]) teamData[t] = [];
@@ -130,22 +140,19 @@
         const x = ((e.clientX - r.left) / r.width) * 100, y = ((e.clientY - r.top) / r.height) * 100;
         const team = document.getElementById('team-select').value;
         const tInput = document.getElementById('m-time');
-        const stepInput = document.getElementById('m-step');
+        const step = parseFloat(document.getElementById('m-step').value);
         
         let t = parseFloat(tInput.value);
         
-        // Salva o ponto no tempo atual da caixa
+        // Adiciona o ponto no tempo exato da caixa
         teamData[team].push({x, y, time: t});
         teamData[team].sort((a,b) => a.time - b.time);
         
-        // Lógica de Soma Automática:
-        let novoTempo = t + parseFloat(stepInput.value);
-        tInput.value = novoTempo; // A caixa aumenta sozinha para o próximo clique
+        // SOMA AUTOMÁTICA PARA O PRÓXIMO CLIQUE
+        tInput.value = t + step;
         
-        // Faz a visualização seguir o clique
+        // Atualiza a visão para o ponto que você acabou de criar
         currentTime = t;
-        document.getElementById('timeline').value = t;
-        
         forceUpdate();
     }
 
@@ -179,7 +186,7 @@
             div.className = 'team-marker';
             div.style = `left:${pos.x}%; top:${pos.y}%; width:45px; height:45px; border-color:${col};`;
             if(teamLogos[t]) div.style.backgroundImage = `url('${teamLogos[t]}')`;
-            else div.innerHTML = `<span style="color:#000; font-size:12px;">${t[0]}</span>`;
+            else div.innerHTML = `<span style="color:#000; font-size:12px; font-weight:bold;">${t[0]}</span>`;
             layer.appendChild(div);
         });
         updateTimelineUI();
@@ -205,10 +212,15 @@
 
     function gameLoop() {
         if(!playing) return;
-        const now = performance.now(); 
-        currentTime += (now - lastTimestamp) / 1000; 
+        const now = performance.now();
+        const speed = parseFloat(document.getElementById('playback-speed').value);
+        
+        // O tempo avança baseado na velocidade escolhida
+        currentTime += ((now - lastTimestamp) / 1000) * speed; 
         lastTimestamp = now;
-        forceUpdate(); requestAnimationFrame(gameLoop);
+        
+        forceUpdate(); 
+        requestAnimationFrame(gameLoop);
     }
 
     function manualSeek(v) { currentTime = parseFloat(v); forceUpdate(); }
@@ -218,12 +230,11 @@
         document.getElementById('timer-txt').innerText = `${m}:${s}`;
     }
     function loadMap(i){ if(i.files[0]){ const r=new FileReader(); r.onload=e=>{mapArea.style.backgroundImage=`url('${e.target.result}')`;setTimeout(resize, 100);}; r.readAsDataURL(i.files[0]);}}
-    function clearData() { if(confirm("Limpar?")) location.reload(); }
+    function clearData() { if(confirm("Limpar tudo?")) location.reload(); }
     function undoLast() { 
         const team = document.getElementById('team-select').value;
-        if(teamData[team] && teamData[team].length > 0) {
+        if(teamData[team].length > 0) {
             teamData[team].pop();
-            // Volta o tempo da caixa para o valor anterior
             const step = parseFloat(document.getElementById('m-step').value);
             document.getElementById('m-time').value = Math.max(0, parseFloat(document.getElementById('m-time').value) - step);
             forceUpdate();
