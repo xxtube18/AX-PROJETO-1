@@ -3,20 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANALYST PRO V18 - VELOCIDADE & CONTRASTE</title>
+    <title>ANALYST PRO - TEMPO AUTO-SOMA</title>
     <style>
         :root { --bg: #020205; --panel: #0b0b15; --cyan: #00f2ff; --neon: #39ff14; --border: #1a1a2e; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; overflow: hidden; }
-        
         .main-container { display: flex; width: 100%; height: 97vh; gap: 10px; }
         .sidebar { width: 320px; background: var(--panel); padding: 15px; border-radius: 12px; border: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
         .map-wrapper { flex: 1; position: relative; background: #000; border: 2px solid #111; overflow: hidden; border-radius: 8px; }
-        
         #map-area { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; position: relative; cursor: crosshair; }
         #map-darkener { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); pointer-events: none; z-index: 1; }
         canvas { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; }
-        
-        #c-heat { z-index: 2; } #c-lines { z-index: 3; } #c-safe { z-index: 4; }
         #p-layer { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 10; pointer-events: none; }
 
         .control-box { background: #121225; padding: 12px; border-radius: 8px; border: 1px solid #1d1d3d; }
@@ -24,25 +20,20 @@
         .btn-map { background: var(--cyan); color: #000; }
         .btn-safe { background: transparent; color: var(--cyan); border: 1px solid var(--cyan); }
         .btn-reset { background: #440000; color: #ffaaaa; margin-top: auto; }
-        
         .btn-add-logo { background: #005f73; color: #fff; border: 1px solid var(--cyan); font-size: 10px; margin-top: 5px; }
 
         input, select { width: 100%; padding: 8px; background: #000; border: 1px solid #333; color: #fff; border-radius: 4px; box-sizing: border-box; }
         label { font-size: 10px; color: #aaa; display: block; margin: 10px 0 5px; text-transform: uppercase; }
 
-        /* MARCADOR COM FUNDO BRANCO PARA LOGOS PRETAS */
         .team-marker { 
             position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid; 
-            background-color: #FFFFFF; /* Fundo branco para destacar logos escuras */
-            background-size: 85%; background-repeat: no-repeat; background-position: center; z-index: 15;
+            background-color: #FFFFFF; background-size: 85%; background-repeat: no-repeat; background-position: center; z-index: 15;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 15px rgba(255,255,255,0.3);
         }
 
         .timeline-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 85%; background: rgba(10, 10, 20, 0.95); padding: 15px 25px; border-radius: 40px; border: 1px solid var(--cyan); z-index: 100; display: flex; align-items: center; gap: 20px; }
         #timeline { flex: 1; accent-color: var(--cyan); }
         .btn-pause { background: var(--neon); color: #000; width: 120px; }
-
         .team-item { margin-bottom: 15px; padding: 10px; background: #0a0a1a; border-radius: 8px; border-left: 4px solid; }
     </style>
 </head>
@@ -52,41 +43,30 @@
     <div class="sidebar">
         <button class="btn-map" onclick="document.getElementById('map-up').click()">🖼️ CARREGAR MAPA</button>
         <input type="file" id="map-up" style="display:none" onchange="loadMap(this)">
-        
         <div class="control-box">
-            <label>🔥 MAPA DE CALOR</label>
-            <input type="range" id="heat-int" min="10" max="150" value="80" oninput="forceUpdate()">
-            <label>RAIO DE EXPLOSÃO</label>
-            <input type="range" id="heat-radius" min="10" max="150" value="50" oninput="forceUpdate()">
-        </div>
-
-        <div class="control-box">
+            <label>TEMPO DO PONTO (S) - AUTO INCREMENTO</label>
+            <input type="number" id="m-time" value="0">
+            <label>INTERVALO DE SOMA (S)</label>
+            <input type="number" id="m-step" value="5">
             <label>TIME SELECIONADO</label>
             <select id="team-select"></select>
-            <label>TEMPO DO PONTO (S)</label>
-            <input type="number" id="m-time" value="0" placeholder="Ex: 60 para 1 min">
         </div>
-
         <div class="control-box">
             <label>BRILHO NEON</label>
             <input type="range" id="neon-power" min="0" max="100" value="60" oninput="forceUpdate()">
             <label>ESCURIDÃO MAPA</label>
             <input type="range" id="map-dark" min="0" max="100" value="85" oninput="updateDarkness(this.value)">
         </div>
-
-        <button class="btn-safe" onclick="setMode('safe')">📍 MARCAR SAFE (S)</button>
+        <button class="btn-safe" onclick="setMode('safe')">📍 MARCAR SAFE</button>
         <button class="btn-reset" onclick="clearData()">⚠️ RESETAR</button>
     </div>
 
     <div class="map-wrapper">
         <div id="map-area" onclick="handleMapClick(event)">
             <div id="map-darkener"></div>
-            <canvas id="c-heat"></canvas>
-            <canvas id="c-lines"></canvas>
-            <canvas id="c-safe"></canvas>
+            <canvas id="c-lines" style="z-index:3"></canvas>
             <div id="p-layer"></div>
         </div>
-
         <div class="timeline-box">
             <span id="timer-txt" style="font-family: monospace; font-size: 16px; color: var(--cyan);">00:00</span>
             <input type="range" id="timeline" min="0" max="1200" value="0" oninput="manualSeek(this.value)">
@@ -95,32 +75,25 @@
     </div>
 
     <div class="sidebar">
-        <h3 style="font-size: 14px; margin: 0 0 10px 0;">Times & Logos</h3>
-        <label>NOMES (SEPARADOS POR VÍRGULA)</label>
+        <h3 style="font-size: 14px; margin: 0;">Times & Logos</h3>
         <input type="text" id="teams-input" value="LOUD, FLUXO, PAIN" onchange="updateTeams()">
-        <div id="v-list" style="flex:1; overflow-y:auto; margin-top:15px;"></div>
-        <button style="background:#333; color:#ccc; margin-top:10px" onclick="undoLast()">DESFAZER (Z)</button>
+        <div id="v-list" style="flex:1; overflow-y:auto; margin-top:10px;"></div>
+        <button style="background:#333; color:#ccc;" onclick="undoLast()">DESFAZER (Z)</button>
     </div>
 </div>
 
 <script>
-    let teamData = {}, teamLogos = {}, playing = false, currentTime = 0, lastTimestamp = 0, currentMode = 'route';
+    let teamData = {}, teamLogos = {}, playing = false, currentTime = 0, lastTimestamp = 0;
     const neonColors = ['#00ffff','#ff00ff','#39ff14','#ffff00','#ff3131','#ff8c00','#00ffcc','#bc13fe','#8eff00','#0070ff','#ff007f','#ffffff'];
-    
-    const cH = document.getElementById('c-heat'), cL = document.getElementById('c-lines'), cS = document.getElementById('c-safe');
-    const ctxH = cH.getContext('2d'), ctxL = cL.getContext('2d'), ctxS = cS.getContext('2d'), mapArea = document.getElementById('map-area');
+    const cL = document.getElementById('c-lines'), mapArea = document.getElementById('map-area');
 
     window.onload = () => {
-        const saved = JSON.parse(localStorage.getItem('analyst_pro_v18') || '{}');
-        teamData = saved.teamData || {}; teamLogos = saved.teamLogos || {}; 
-        if(saved.bg) mapArea.style.backgroundImage = `url('${saved.bg}')`;
         updateTeams(); resize(); updateDarkness(85);
     };
 
     function resize() {
         const r = mapArea.getBoundingClientRect();
-        cH.width = cL.width = cS.width = r.width;
-        cH.height = cL.height = cS.height = r.height;
+        cL.width = r.width; cL.height = r.height;
         forceUpdate();
     }
 
@@ -136,22 +109,18 @@
             tSel.innerHTML += `<option value="${t}">${t}</option>`;
             vList.innerHTML += `
                 <div class="team-item" style="border-color:${col}">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span style="color:${col}; font-weight:bold;">${t}</span>
-                        <input type="checkbox" checked id="v-${t}" onchange="forceUpdate()">
-                    </div>
+                    <span style="color:${col}; font-weight:bold;">${t}</span>
                     <button class="btn-add-logo" onclick="document.getElementById('file-${t}').click()">ADD LOGO: ${t}</button>
                     <input type="file" id="file-${t}" style="display:none" onchange="importLogo(this, '${t}')">
                 </div>`;
             if(!teamData[t]) teamData[t] = [];
         });
-        forceUpdate();
     }
 
     function importLogo(input, t) {
         if (input.files[0]) {
             const reader = new FileReader();
-            reader.onload = e => { teamLogos[t] = e.target.result; save(); forceUpdate(); };
+            reader.onload = e => { teamLogos[t] = e.target.result; forceUpdate(); };
             reader.readAsDataURL(input.files[0]);
         }
     }
@@ -160,30 +129,41 @@
         const r = mapArea.getBoundingClientRect();
         const x = ((e.clientX - r.left) / r.width) * 100, y = ((e.clientY - r.top) / r.height) * 100;
         const team = document.getElementById('team-select').value;
-        const t = parseFloat(document.getElementById('m-time').value);
+        const tInput = document.getElementById('m-time');
+        const stepInput = document.getElementById('m-step');
         
+        let t = parseFloat(tInput.value);
+        
+        // Salva o ponto no tempo atual da caixa
         teamData[team].push({x, y, time: t});
         teamData[team].sort((a,b) => a.time - b.time);
         
-        // Atualiza o tempo atual para onde você clicou para facilitar a marcação
+        // Lógica de Soma Automática:
+        let novoTempo = t + parseFloat(stepInput.value);
+        tInput.value = novoTempo; // A caixa aumenta sozinha para o próximo clique
+        
+        // Faz a visualização seguir o clique
         currentTime = t;
         document.getElementById('timeline').value = t;
-        save(); forceUpdate();
+        
+        forceUpdate();
     }
 
     function forceUpdate() {
-        ctxL.clearRect(0,0,cL.width, cL.height);
+        const ctx = cL.getContext('2d');
+        ctx.clearRect(0,0,cL.width, cL.height);
         const glow = document.getElementById('neon-power').value;
+        
         Object.keys(teamData).forEach((t, i) => {
-            if(!document.getElementById(`v-${t}`)?.checked || teamData[t].length < 1) return;
+            if(teamData[t].length < 1) return;
             const col = neonColors[i % neonColors.length];
-            ctxL.shadowBlur = glow; ctxL.shadowColor = col; ctxL.strokeStyle = col; ctxL.lineWidth = 3;
-            ctxL.beginPath();
+            ctx.shadowBlur = glow; ctx.shadowColor = col; ctx.strokeStyle = col; ctx.lineWidth = 3;
+            ctx.beginPath();
             teamData[t].forEach((p, idx) => {
                 const px = (p.x/100)*cL.width, py = (p.y/100)*cL.height;
-                idx === 0 ? ctxL.moveTo(px, py) : ctxL.lineTo(px, py);
+                idx === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
             });
-            ctxL.stroke();
+            ctx.stroke();
         });
         renderMarkers();
     }
@@ -192,16 +172,14 @@
         const layer = document.getElementById('p-layer');
         layer.innerHTML = '';
         Object.keys(teamData).forEach((t, i) => {
-            if(!document.getElementById(`v-${t}`)?.checked || !teamData[t].length) return;
+            if(!teamData[t].length) return;
             const pos = interpolate(teamData[t], currentTime);
             const col = neonColors[i % neonColors.length];
             const div = document.createElement('div');
             div.className = 'team-marker';
-            div.style = `left:${pos.x}%; top:${pos.y}%; width:45px; height:45px; border-color:${col}; box-shadow:0 0 15px ${col};`;
-            
+            div.style = `left:${pos.x}%; top:${pos.y}%; width:45px; height:45px; border-color:${col};`;
             if(teamLogos[t]) div.style.backgroundImage = `url('${teamLogos[t]}')`;
-            else div.innerHTML = `<span style="color:#000; font-size:14px; font-weight:bold;">${t[0]}</span>`;
-            
+            else div.innerHTML = `<span style="color:#000; font-size:12px;">${t[0]}</span>`;
             layer.appendChild(div);
         });
         updateTimelineUI();
@@ -228,11 +206,8 @@
     function gameLoop() {
         if(!playing) return;
         const now = performance.now(); 
-        // Aumenta o tempo em 1 segundo por segundo real
         currentTime += (now - lastTimestamp) / 1000; 
         lastTimestamp = now;
-        
-        if(currentTime > 1200) { playing = false; togglePlay(); }
         forceUpdate(); requestAnimationFrame(gameLoop);
     }
 
@@ -242,10 +217,18 @@
         const m = Math.floor(currentTime/60).toString().padStart(2,'0'), s = Math.floor(currentTime%60).toString().padStart(2,'0');
         document.getElementById('timer-txt').innerText = `${m}:${s}`;
     }
-    function save() { localStorage.setItem('analyst_pro_v18', JSON.stringify({ teamData, teamLogos, bg: mapArea.style.backgroundImage.replace(/url\(['"]?(.*?)['"]?\)/, '$1') })); }
-    function loadMap(i){ if(i.files[0]){ const r=new FileReader(); r.onload=e=>{mapArea.style.backgroundImage=`url('${e.target.result}')`;save();setTimeout(resize, 100);}; r.readAsDataURL(i.files[0]);}}
-    function clearData() { if(confirm("Limpar tudo?")) { localStorage.clear(); location.reload(); } }
-    function undoLast() { const t = document.getElementById('team-select').value; teamData[t].pop(); save(); forceUpdate(); }
+    function loadMap(i){ if(i.files[0]){ const r=new FileReader(); r.onload=e=>{mapArea.style.backgroundImage=`url('${e.target.result}')`;setTimeout(resize, 100);}; r.readAsDataURL(i.files[0]);}}
+    function clearData() { if(confirm("Limpar?")) location.reload(); }
+    function undoLast() { 
+        const team = document.getElementById('team-select').value;
+        if(teamData[team] && teamData[team].length > 0) {
+            teamData[team].pop();
+            // Volta o tempo da caixa para o valor anterior
+            const step = parseFloat(document.getElementById('m-step').value);
+            document.getElementById('m-time').value = Math.max(0, parseFloat(document.getElementById('m-time').value) - step);
+            forceUpdate();
+        }
+    }
 </script>
 </body>
 </html>
