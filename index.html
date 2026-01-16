@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ANALYST PRO V16.0 - HEATMAP INDEPENDENTE</title>
+    <title>ANALYST PRO V16.0 - MANUAL LOGOS</title>
     <style>
         :root { --bg: #020205; --panel: #0b0b15; --cyan: #00f2ff; --neon: #39ff14; --border: #1a1a2e; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; overflow: hidden; }
@@ -17,15 +17,30 @@
         #c-lines { z-index: 3; }
         #c-safe { z-index: 4; }
         #p-layer { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 10; pointer-events: none; }
+        
+        /* Marcador com Fundo Oposto e Neon Forte */
+        .team-marker { 
+            position: absolute; 
+            transform: translate(-50%, -50%); 
+            border-radius: 50%; 
+            border: 2px solid; 
+            background-color: #05050a; /* Fundo sólido para contraste */
+            background-size: 85%; 
+            background-repeat: no-repeat; 
+            background-position: center; 
+            z-index: 15;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .control-box { background: #121225; padding: 12px; border-radius: 8px; border: 1px solid #1d1d3d; }
         button { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; transition: 0.2s; }
-        button:hover { filter: brightness(1.2); }
         input, select { width: 100%; padding: 8px; background: #05050a; border: 1px solid #222; color: #fff; border-radius: 4px; box-sizing: border-box; }
         label { font-size: 10px; color: #aaa; display: block; margin: 10px 0 5px; text-transform: uppercase; }
-        .team-marker { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 2.5px solid #fff; background-color: #fff; background-size: contain; background-repeat: no-repeat; background-position: center; z-index: 15; }
+
         .timeline-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 85%; background: rgba(10, 10, 20, 0.95); padding: 12px 25px; border-radius: 40px; border: 1px solid var(--cyan); z-index: 100; display: flex; align-items: center; gap: 20px; }
         #timeline { flex: 1; accent-color: var(--cyan); }
-        .switch-container { display: flex; align-items: center; justify-content: space-between; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -35,14 +50,10 @@
             <input type="file" id="map-up" style="display:none" onchange="loadMap(this)">
             
             <div class="control-box">
-                <div class="switch-container">
-                    <label style="margin:0">🔥 MAPA DE CALOR</label>
-                    <input type="checkbox" id="heat-toggle" checked onchange="forceUpdate()" style="width:20px">
-                </div>
+                <label>🔥 MAPA DE CALOR</label>
+                <input type="checkbox" id="heat-toggle" checked onchange="forceUpdate()">
                 <label>Intensidade</label>
-                <input type="range" id="heat-int" min="5" max="150" value="70" oninput="forceUpdate()">
-                <label>Raio de Explosão</label>
-                <input type="range" id="heat-radius" min="10" max="150" value="50" oninput="forceUpdate()">
+                <input type="range" id="heat-int" min="10" max="180" value="90" oninput="forceUpdate()">
             </div>
 
             <div class="control-box">
@@ -54,11 +65,9 @@
 
             <div class="control-box">
                 <label>Brilho Neon</label>
-                <input type="range" id="neon-power" min="0" max="100" value="50" oninput="forceUpdate()">
-                <label>Escuridão Mapa</label>
-                <input type="range" id="map-dark" min="0" max="100" value="85" oninput="updateDarkness(this.value)">
-                <label>Tamanho Safe</label>
-                <input type="range" id="safe-size" min="10" max="600" value="150" oninput="forceUpdate()">
+                <input type="range" id="neon-power" min="5" max="100" value="65" oninput="forceUpdate()">
+                <label>Tamanho Logos</label>
+                <input type="range" id="logo-size" min="20" max="80" value="45" oninput="forceUpdate()">
             </div>
 
             <button id="btn-safe" style="background:#222; color:var(--cyan); border:1px solid var(--cyan)" onclick="setMode('safe')">📍 MARCAR SAFE (S)</button>
@@ -82,9 +91,8 @@
         </div>
 
         <div class="sidebar">
-            <h3>Linhas das Equipes</h3>
+            <h3>Times Ativos</h3>
             <div id="v-list" style="flex:1; overflow-y:auto;"></div>
-            <label>Nomes dos Times</label>
             <input type="text" id="teams-input" value="LOUD, FLUXO, PAIN, LOS, RED, KEYD, FURIA, VK, E1, MIBR, NET, SX" onchange="updateTeams()">
             <button style="background:#333; color:#ccc; margin-top:10px" onclick="undoLast()">DESFAZER (Z)</button>
         </div>
@@ -101,7 +109,7 @@
         const saved = JSON.parse(localStorage.getItem('analyst_pro_v16') || '{}');
         teamData = saved.teamData || {}; safePos = saved.safePos || null;
         if(saved.bg) mapArea.style.backgroundImage = `url('${saved.bg}')`;
-        updateTeams(); resize(); updateDarkness(85);
+        updateTeams(); resize();
     };
 
     function resize() {
@@ -111,8 +119,6 @@
         forceUpdate();
     }
     window.onresize = resize;
-
-    function updateDarkness(val) { document.getElementById('map-darkener').style.background = `rgba(0,0,0,${val/100})`; }
 
     function updateTeams() {
         const names = document.getElementById('teams-input').value.split(',').map(t => t.trim());
@@ -153,30 +159,19 @@
     function drawHeatmap() {
         ctxH.clearRect(0, 0, cH.width, cH.height);
         if(!document.getElementById('heat-toggle').checked) return;
-
-        const radius = parseFloat(document.getElementById('heat-radius').value);
-        const intensity = parseFloat(document.getElementById('heat-int').value) / 100;
-
+        const radius = 60, intensity = parseFloat(document.getElementById('heat-int').value) / 100;
         ctxH.globalCompositeOperation = 'screen';
-        ctxH.filter = "blur(5px)";
-
         Object.keys(teamData).forEach(t => {
-            // Independente do checkbox v-list, o heatmap desenha todos os dados salvos
             teamData[t].forEach(p => {
-                const px = (p.x / 100) * cH.width;
-                const py = (p.y / 100) * cH.height;
-
+                const px = (p.x / 100) * cH.width, py = (p.y / 100) * cH.height;
                 const grad = ctxH.createRadialGradient(px, py, 0, px, py, radius);
                 grad.addColorStop(0, `rgba(255, 0, 70, ${intensity})`); 
-                grad.addColorStop(0.4, `rgba(255, 120, 0, ${intensity * 0.4})`); 
                 grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
                 ctxH.fillStyle = grad;
-                ctxH.beginPath();
-                ctxH.arc(px, py, radius, 0, Math.PI * 2);
-                ctxH.fill();
+                ctxH.beginPath(); ctxH.arc(px, py, radius, 0, Math.PI * 2); ctxH.fill();
             });
         });
+        ctxH.filter = "blur(5px)";
     }
 
     function forceUpdate() {
@@ -185,22 +180,17 @@
         ctxS.clearRect(0,0,cS.width, cS.height);
         const glow = document.getElementById('neon-power').value;
 
-        // Safe
         if(safePos) {
             const rad = parseFloat(document.getElementById('safe-size').value);
             ctxS.shadowBlur = glow; ctxS.shadowColor = "#00f2ff"; ctxS.strokeStyle = "#00f2ff"; ctxS.lineWidth = 4;
             ctxS.beginPath(); ctxS.arc((safePos.x/100)*cS.width, (safePos.y/100)*cS.height, rad, 0, Math.PI*2); ctxS.stroke();
-            ctxS.shadowBlur = 0; ctxS.strokeStyle = "#fff"; ctxS.lineWidth = 1.5; ctxS.stroke();
         }
 
-        // Linhas Neon (Dependem do checkbox)
         Object.keys(teamData).forEach((t, i) => {
             const check = document.getElementById(`v-${t}`);
             if(check && !check.checked) return;
-            if(teamData[t].length < 1) return;
-
             const col = neonColors[i % neonColors.length];
-            ctxL.shadowBlur = glow / 2; ctxL.shadowColor = col; ctxL.strokeStyle = col; ctxL.lineWidth = 3.5;
+            ctxL.shadowBlur = glow / 1.5; ctxL.shadowColor = col; ctxL.strokeStyle = col; ctxL.lineWidth = 3.5;
             ctxL.lineCap = "round"; ctxL.lineJoin = "round";
             ctxL.beginPath();
             teamData[t].forEach((p, idx) => {
@@ -216,16 +206,22 @@
     function renderMarkers() {
         const layer = document.getElementById('p-layer');
         layer.innerHTML = '';
-        const size = 35; 
+        const size = document.getElementById('logo-size').value;
+        const glow = document.getElementById('neon-power').value;
+
         Object.keys(teamData).forEach((tName, i) => {
             const check = document.getElementById(`v-${tName}`);
             if(check && !check.checked) return;
             const pos = interpolate(teamData[tName], currentTime);
             if(pos) {
-                const col = neonColors[i % neonColors.length], div = document.createElement('div');
+                const col = neonColors[i % neonColors.length];
+                const div = document.createElement('div');
                 div.className = 'team-marker';
-                // Busca a logo na pasta IMG local
-                div.style = `left:${pos.x}%; top:${pos.y}%; width:${size}px; height:${size}px; border-color:${col}; box-shadow:0 0 15px ${col}; background-image:url('img/${tName}.png'), url('https://via.placeholder.com/100/333/fff?text=${tName[0]}')`;
+                div.style = `left:${pos.x}%; top:${pos.y}%; width:${size}px; height:${size}px; border-color:${col}; box-shadow:0 0 ${glow/1.5}px ${col}; background-image:url('img/${tName}.png')`;
+                
+                // Texto de backup se a imagem não carregar
+                div.innerHTML = `<span style="color:${col}; font-weight:bold; font-size:${size/2.2}px; opacity:0.7;">${tName[0]}</span>`;
+                
                 layer.appendChild(div);
             }
         });
@@ -233,7 +229,7 @@
     }
 
     function interpolate(pts, t) {
-        if(!pts || pts.length === 0) return null;
+        if(!pts.length) return null;
         if(t <= pts[0].time) return pts[0];
         if(t >= pts[pts.length-1].time) return pts[pts.length-1];
         for(let i=0; i<pts.length-1; i++){
