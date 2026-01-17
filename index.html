@@ -3,302 +3,300 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coach Lipee - Custom Exposure V12</title>
+    <title>COACH LIPEE - MANUAL TIME V36</title>
     <style>
-        body { background: #050505; margin: 0; font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; }
+        :root { --neon-green: #00FF00; --dark-bg: #050505; --panel-bg: rgba(15, 15, 15, 0.98); }
+        body { background: var(--dark-bg); margin: 0; font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; }
         
-        #splash-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, #111 0%, #000 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
+        #controls-panel {
+            background: var(--panel-bg); padding: 10px; display: flex; flex-wrap: wrap; gap: 10px; 
+            justify-content: center; align-items: center; border-bottom: 2px solid #333; z-index: 100;
         }
 
-        .splash-logo { font-size: 3rem; font-weight: bold; color: #00FF00; text-shadow: 0 0 30px #00FF00; margin-bottom: 10px; text-align: center; }
-
-        #main-app { display: none; flex-direction: column; align-items: center; height: 100vh; padding: 10px; }
+        .control-group { background: #1a1a1a; padding: 6px 12px; border-radius: 6px; border: 1px solid #333; display: flex; align-items: center; gap: 8px; }
+        label { font-weight: bold; color: var(--neon-green); font-size: 10px; text-transform: uppercase; }
+        input[type=range] { accent-color: var(--neon-green); width: 70px; }
         
-        #controls {
-            background: rgba(15, 15, 15, 0.98); padding: 12px; border-radius: 12px;
-            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-            border: 1px solid #333; margin-bottom: 10px; width: 98%;
-            box-shadow: 0 0 25px rgba(0, 255, 0, 0.1);
-        }
+        .action-btn { padding: 8px 15px; border-radius: 4px; border: none; font-weight: 900; cursor: pointer; font-size: 10px; text-transform: uppercase; transition: 0.2s; }
+        .btn-safe { background: #f1c40f; color: #000; }
+        .btn-view { background: #3498db; color: #fff; }
+        .btn-time { background: #e74c3c; color: #fff; }
+        .btn-anim { background: #9b59b6; color: #fff; box-shadow: 0 0 10px #9b59b6; }
+        .btn-save { background: #2ecc71; color: #000; }
 
-        .config-group { background: #1a1a1a; padding: 6px 12px; border-radius: 8px; border: 1px solid #444; display: flex; align-items: center; gap: 8px; font-size: 11px; }
-
-        #map-container { position: relative; border: 2px solid #444; line-height: 0; background: #111; overflow: hidden; cursor: crosshair; }
-        #game-map { transition: filter 0.1s; max-width: 100%; max-height: 72vh; }
-        #drawing-canvas { position: absolute; top: 0; left: 0; pointer-events: none; }
-
-        button { padding: 10px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; }
-        .btn-play { background: #00FF00; color: #000; box-shadow: 0 0 15px #00FF00; }
-        .btn-undo { background: #ffcc00; color: #000; }
-        .btn-clear { background: #ff4444; color: #fff; }
-        .btn-save { background: #00d4ff; color: #000; }
+        #viewport { position: relative; width: 100vw; height: calc(100vh - 80px); display: flex; justify-content: center; align-items: center; background: #000; }
+        #map-container { position: relative; display: inline-block; }
+        #game-map { max-width: 98vw; max-height: 80vh; display: block; filter: brightness(60%) contrast(1.1); }
         
-        #legend {
-            position: absolute; bottom: 15px; right: 15px; background: rgba(0,0,0,0.85);
-            padding: 10px; border-radius: 8px; border: 1px solid #00FF00; display: flex; flex-direction: column; gap: 3px;
-        }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 9px; font-weight: bold; color: #fff; }
-        .color-box { width: 12px; height: 12px; border: 0.5px solid white; }
+        .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        #heatmap-layer { z-index: 5; mix-blend-mode: screen; }
+        #vector-layer { z-index: 10; }
+        #interaction-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; z-index: 50; pointer-events: all; }
 
-        input[type=range] { cursor: pointer; accent-color: #00FF00; }
-        input[type=text], select { background: #111; color: #fff; border: 1px solid #444; padding: 5px; border-radius: 4px; font-size: 12px; }
-        label { font-weight: bold; color: #00FF00; font-size: 10px; }
+        #hud { position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 4px; border-left: 4px solid var(--neon-green); font-size: 11px; z-index: 60; pointer-events: none; }
+        .input-dark { background:#222; color:#fff; border:1px solid #444; padding: 2px; }
     </style>
 </head>
 <body>
 
-    <div id="splash-screen">
-        <div class="splash-logo">COACH LIPEE<br><span style="font-size: 1rem; color: #fff; letter-spacing: 3px;">EXPOSURE CONTROL V12</span></div>
-        <button class="btn-play" style="padding: 15px 40px; font-size: 1.2rem;" onclick="startApp()">INICIAR SISTEMA</button>
+    <div id="controls-panel">
+        <div class="control-group"><label>📂 MAPA</label><input type="file" id="up-map" accept="image/*"></div>
+        <div class="control-group"><label>🌑 BRILHO</label><input type="range" id="map-bright" min="10" max="100" value="60"></div>
+        
+        <div class="control-group">
+            <label>🔥 RAIO CALOR</label>
+            <input type="range" id="heat-radius" min="10" max="150" value="40">
+        </div>
+        <div class="control-group">
+            <label>🔆 DENSIDADE</label>
+            <input type="range" id="heat-opacity" min="0.1" max="1.0" step="0.1" value="0.5">
+        </div>
+
+        <div class="control-group">
+            <label>SLOT</label><select id="team-slot" class="input-dark"></select>
+            <input type="text" id="team-tag" placeholder="TAG" style="width:40px;" class="input-dark">
+            <label>⏱️ MIN</label><input type="text" id="manual-min" placeholder="Ex: 5" style="width:35px;" class="input-dark">
+        </div>
+        
+        <div class="control-group">
+            <label>LOGO</label><input type="file" id="up-logo" accept="image/*" style="width: 80px; font-size: 8px;">
+        </div>
+
+        <div class="control-group">
+            <button class="action-btn btn-safe" id="mode-safe">SAFE: OFF</button>
+            <button class="action-btn btn-view" id="toggle-vectors">👁️ VER</button>
+            <button class="action-btn btn-time" id="toggle-timer">⏱️ TEMPO</button>
+        </div>
+
+        <div style="display: flex; gap: 6px;">
+            <button class="action-btn btn-anim" id="start-replay">▶️ REPLAY</button>
+            <button class="action-btn btn-save" id="export-btn">💾 SALVAR</button>
+            <label class="action-btn" style="background:#e67e22; color:#fff; margin:0; cursor:pointer">📂 CARREGAR <input type="file" id="import-btn" style="display:none" accept=".json"></label>
+            <button class="action-btn" style="background:#444; color:#fff" onclick="location.reload()">🗑️ RESET</button>
+        </div>
     </div>
 
-    <div id="main-app">
-        <div id="controls">
-            <input type="file" id="map-upload" accept="image/*">
-            
-            <div class="config-group">
-                <label>🖼️ CLAREAR MAPA:</label>
-                <input type="range" id="map-brightness" min="10" max="150" value="70">
-            </div>
-
-            <div class="config-group">
-                <label>SLOT:</label>
-                <select id="team-select"></select>
-                <input type="checkbox" id="slot-visible-toggle" checked title="Ver Rota">
-            </div>
-            
-            <div class="config-group">
-                <label>🌡️ HEATMAP:</label>
-                <input type="checkbox" id="heatmap-toggle" checked>
-            </div>
-
-            <div class="config-group">
-                <label>⚡ BRILHO NEON:</label>
-                <input type="color" id="neon-color" value="#00FF00">
-                <input type="range" id="neon-brilho" min="10" max="400" value="150">
-            </div>
-
-            <div class="config-group">
-                <label>📏 TAM. LOGO:</label>
-                <input type="range" id="logo-size" min="10" max="150" value="50">
-            </div>
-
-            <button class="btn-undo" id="undo-btn">↩️</button>
-            <button class="btn-play" id="play-btn">▶️</button>
-            <button class="btn-save" id="save-btn">📸 SALVAR</button>
-            <button class="btn-clear" id="clear-btn">🗑️</button>
-        </div>
-
+    <div id="viewport">
         <div id="map-container">
             <img id="game-map" src="">
-            <canvas id="drawing-canvas"></canvas>
-            <div id="legend"></div>
+            <canvas id="heatmap-layer" class="layer"></canvas>
+            <canvas id="vector-layer" class="layer"></canvas>
+            <div id="interaction-layer"></div>
         </div>
+        <div id="hud">STATUS: <span id="hud-mode" style="color:var(--neon-green)">ROTAÇÃO</span><br>SAFES: <span id="hud-safes">0</span> | PONTOS: <span id="hud-pts">0</span></div>
     </div>
 
     <script>
-        const canvas = document.getElementById('drawing-canvas');
-        const ctx = canvas.getContext('2d');
-        const gameMap = document.getElementById('game-map');
-        const teamSelect = document.getElementById('team-select');
-        const mapBrightness = document.getElementById('map-brightness');
-        const heatmapToggle = document.getElementById('heatmap-toggle');
-        const slotVisibleToggle = document.getElementById('slot-visible-toggle');
+        const state = { 
+            mapLoaded: false, safeMode: false, showVectors: true, showTimer: true, activeSlot: 1, animating: false, 
+            teams: {}, history: {}, safeHistory: [], animStart: 0 
+        };
+        const logos = {};
+        const PALETTE = [[0,0,255], [0,104,55], [26,152,80], [166,217,106], [217,239,139], [254,224,139], [253,174,97], [244,109,67], [215,48,39], [165,0,38]];
+        const canvases = { heat: document.getElementById('heatmap-layer'), vector: document.getElementById('vector-layer') };
+        const ctxs = { heat: canvases.heat.getContext('2d'), vector: canvases.vector.getContext('2d') };
 
-        const decisColors = {
-            1: "#006837", 2: "#1a9850", 3: "#a6d96a", 
-            4: "#d9ef8b", 5: "#fee08b", 6: "#fdae61", 
-            7: "#f46d43", 8: "#d73027", 9: "#a50026"
+        for(let i=1; i<=12; i++) {
+            state.teams[i] = { tag: `T${i}`, color: getTeamColor(i) };
+            state.history[i] = [];
+            document.getElementById('team-slot').add(new Option(`Slot ${i}`, i));
+        }
+
+        function getTeamColor(i) {
+            return ['#FF0000', '#00FF00', '#0080FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#CC00FF', '#00FF7F', '#FFD700', '#FF69B4', '#40E0D0'][i-1];
+        }
+
+        document.getElementById('up-map').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => { 
+                document.getElementById('game-map').src = ev.target.result; 
+                document.getElementById('game-map').onload = () => { state.mapLoaded = true; resize(); }; 
+            };
+            reader.readAsDataURL(e.target.files[0]);
         };
 
-        let teamData = {}; 
-        let teamHistory = {}; 
-        let activeTeam = 1;
-        let isAnimating = false;
-        let animStart;
-
-        function startApp() {
-            document.getElementById('splash-screen').style.display = 'none';
-            document.getElementById('main-app').style.display = 'flex';
-            createLegend();
-            init();
-        }
-
-        function createLegend() {
-            const legend = document.getElementById('legend');
-            for(let i=9; i>=1; i--) {
-                const item = document.createElement('div');
-                item.className = 'legend-item';
-                item.innerHTML = `<div class="color-box" style="background:${decisColors[i]}"></div> <span>D${i}</span>`;
-                legend.appendChild(item);
-            }
-        }
-
-        function updateMapFilter() {
-            const val = mapBrightness.value / 100;
-            gameMap.style.filter = `brightness(${val}) contrast(1.1)`;
-        }
-
-        function init() {
-            for(let i=1; i<=12; i++) {
-                teamData[i] = { tag: 'T'+i, neonColor: '#00FF00', size: 50, brilho: 150, visible: true };
-                teamHistory[i] = [];
-                let opt = document.createElement('option');
-                opt.value = i; opt.text = 'Time ' + i;
-                teamSelect.add(opt);
-            }
-
-            mapBrightness.oninput = updateMapFilter;
-            updateMapFilter();
-
-            document.getElementById('map-upload').onchange = (e) => {
-                const reader = new FileReader();
-                reader.onload = (ev) => { gameMap.src = ev.target.result; setTimeout(redraw, 300); };
-                reader.readAsDataURL(e.target.files[0]);
+        document.getElementById('up-logo').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image(); img.src = ev.target.result;
+                img.onload = () => { logos[state.activeSlot] = img; render(); };
             };
+            reader.readAsDataURL(e.target.files[0]);
+        };
 
-            document.getElementById('map-container').onmousedown = (e) => {
-                if(isAnimating || !gameMap.src) return;
-                const rect = gameMap.getBoundingClientRect();
-                const sx = gameMap.naturalWidth / rect.width;
-                const sy = gameMap.naturalHeight / rect.height;
-                const x = (e.clientX - rect.left) * sx;
-                const y = (e.clientY - rect.top) * sy;
-                teamHistory[activeTeam].push({ x, y });
-                redraw();
-            };
-
-            document.getElementById('undo-btn').onclick = () => { teamHistory[activeTeam].pop(); redraw(); };
-            document.getElementById('play-btn').onclick = toggleAnim;
-            document.getElementById('clear-btn').onclick = () => location.reload();
-            document.getElementById('save-btn').onclick = saveImage;
-            
-            heatmapToggle.onchange = redraw;
-            slotVisibleToggle.onchange = (e) => { teamData[activeTeam].visible = e.target.checked; redraw(); };
-            teamSelect.onchange = (e) => { activeTeam = e.target.value; updateUI(); };
-            
-            document.getElementById('logo-size').oninput = (e) => { teamData[activeTeam].size = e.target.value; redraw(); };
-            document.getElementById('neon-color').oninput = (e) => { teamData[activeTeam].neonColor = e.target.value; redraw(); };
-            document.getElementById('neon-brilho').oninput = (e) => { teamData[activeTeam].brilho = e.target.value; redraw(); };
+        function resize() {
+            const rect = document.getElementById('game-map').getBoundingClientRect();
+            canvases.heat.width = canvases.vector.width = rect.width;
+            canvases.heat.height = canvases.vector.height = rect.height;
+            render();
         }
 
-        function updateUI() {
-            const t = teamData[activeTeam];
-            document.getElementById('logo-size').value = t.size;
-            document.getElementById('neon-color').value = t.neonColor;
-            document.getElementById('neon-brilho').value = t.brilho;
-            slotVisibleToggle.checked = t.visible;
-        }
+        document.getElementById('interaction-layer').onmousedown = (e) => {
+            if(!state.mapLoaded) return;
+            const rect = e.target.getBoundingClientRect();
+            const nx = (e.clientX - rect.left) / rect.width;
+            const ny = (e.clientY - rect.top) / rect.height;
+            const manualMin = document.getElementById('manual-min').value || "0";
 
-        function drawDecisHeatmap(sx, sy) {
-            if (!heatmapToggle.checked) return;
-            ctx.save();
-            ctx.lineWidth = 0.5;
-            ctx.strokeStyle = "white";
-            ctx.globalAlpha = 0.8;
-
-            for(let id in teamHistory) {
-                const history = teamHistory[id];
-                history.forEach((p, index) => {
-                    let decisLevel = Math.min(9, Math.ceil((index + 1) / (Math.max(1, history.length / 9))));
-                    const radius = 100 * sx;
-                    ctx.fillStyle = decisColors[decisLevel];
-                    ctx.beginPath();
-                    ctx.arc(p.x*sx, p.y*sy, radius, 0, Math.PI*2);
-                    ctx.fill();
-                    ctx.stroke();
-                });
-            }
-            ctx.restore();
-        }
-
-        function redraw(elapsed = null) {
-            if(!gameMap.src) return;
-            canvas.width = gameMap.clientWidth;
-            canvas.height = gameMap.clientHeight;
-            const sx = canvas.width / gameMap.naturalWidth;
-            const sy = canvas.height / gameMap.naturalHeight;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawDecisHeatmap(sx, sy);
-
-            for(let id in teamHistory) {
-                const config = teamData[id];
-                if(!config.visible) continue;
-                const history = teamHistory[id];
-                if(history.length < 1) continue;
-
-                ctx.save();
-                ctx.beginPath();
-                ctx.shadowBlur = config.brilho;
-                ctx.shadowColor = config.neonColor;
-                ctx.strokeStyle = config.neonColor;
-                ctx.lineWidth = 6;
-                ctx.lineCap = "round";
-                ctx.lineJoin = "round";
-                history.forEach((p, i) => { (i === 0) ? ctx.moveTo(p.x*sx, p.y*sy) : ctx.lineTo(p.x*sx, p.y*sy); });
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-                ctx.strokeStyle = "#fff";
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                ctx.restore();
-
-                history.forEach(p => drawLogoAt(p.x*sx, p.y*sy, config));
-            }
-        }
-
-        function drawLogoAt(x, y, t) {
-            ctx.save();
-            ctx.shadowBlur = t.brilho / 3;
-            ctx.shadowColor = t.neonColor;
-            ctx.fillStyle = "#fff";
-            ctx.beginPath(); ctx.arc(x, y, t.size/2, 0, Math.PI*2); ctx.fill();
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = t.neonColor;
-            ctx.stroke();
-            ctx.fillStyle = "#000";
-            ctx.font = `bold ${t.size/2.5}px Arial`;
-            ctx.textAlign = "center";
-            ctx.fillText(t.tag, x, y + (t.size/8));
-            ctx.restore();
-        }
-
-        function toggleAnim() {
-            isAnimating = !isAnimating;
-            if(isAnimating) {
-                animStart = performance.now();
-                requestAnimationFrame(run);
-                document.getElementById('play-btn').innerText = "⏹️";
+            if(state.safeMode) {
+                state.safeHistory.push({ x: nx, y: ny, r: 25 / 100 });
             } else {
-                document.getElementById('play-btn').innerText = "▶️";
-                redraw();
+                state.history[state.activeSlot].push({ x: nx, y: ny, time: manualMin });
             }
+            updateHUD(); render();
+        };
+
+        function drawHeat() {
+            const w = canvases.heat.width, h = canvases.heat.height;
+            if(w === 0 || !state.mapLoaded) return;
+
+            const radius = parseInt(document.getElementById('heat-radius').value);
+            const opacity = parseFloat(document.getElementById('heat-opacity').value);
+
+            const temp = document.createElement('canvas'); 
+            temp.width = w * 0.5; temp.height = h * 0.5;
+            const tctx = temp.getContext('2d'); 
+            
+            tctx.fillStyle = "rgb(0,0,255)"; 
+            tctx.fillRect(0,0,temp.width,temp.height);
+            tctx.globalCompositeOperation = "lighter";
+
+            Object.values(state.history).forEach(hist => hist.forEach(p => {
+                let g = tctx.createRadialGradient(p.x*temp.width, p.y*temp.height, 0, p.x*temp.width, p.y*temp.height, radius/2);
+                g.addColorStop(0, "rgba(255,255,255,0.5)"); 
+                g.addColorStop(1, "rgba(255,255,255,0)");
+                tctx.fillStyle = g; 
+                tctx.beginPath(); 
+                tctx.arc(p.x*temp.width, p.y*temp.height, radius/2, 0, Math.PI*2); 
+                tctx.fill();
+            }));
+
+            const data = tctx.getImageData(0,0,temp.width,temp.height);
+            for(let i=0; i<data.data.length; i+=4) { 
+                const b = data.data[i]; 
+                const c = PALETTE[Math.min(9, Math.floor((b/255)*12))] || PALETTE[0]; 
+                data.data[i] = c[0]; data.data[i+1] = c[1]; data.data[i+2] = c[2]; 
+            }
+            tctx.putImageData(data,0,0); 
+            ctxs.heat.clearRect(0,0,w,h); 
+            ctxs.heat.globalAlpha = opacity; 
+            ctxs.heat.drawImage(temp, 0, 0, w, h);
         }
 
-        function run(now) {
-            if(!isAnimating) return;
-            redraw((now - animStart) / 1000);
-            requestAnimationFrame(run);
+        function drawVectors(animTeams = null, animSafe = null) {
+            const w = canvases.vector.width, h = canvases.vector.height;
+            ctxs.vector.clearRect(0,0,w,h);
+            if(!state.showVectors) return;
+
+            const safe = animSafe || (state.safeHistory.length > 0 ? state.safeHistory[state.safeHistory.length - 1] : null);
+            if(safe) {
+                ctxs.vector.beginPath(); ctxs.vector.setLineDash([10, 5]); ctxs.vector.strokeStyle = "white"; ctxs.vector.lineWidth = 3;
+                ctxs.vector.arc(safe.x*w, safe.y*h, safe.r*w, 0, Math.PI*2); ctxs.vector.stroke(); ctxs.vector.setLineDash([]);
+            }
+
+            Object.keys(state.history).forEach(id => {
+                const hist = state.history[id], team = state.teams[id];
+                if(hist.length === 0) return;
+
+                ctxs.vector.beginPath(); ctxs.vector.strokeStyle = team.color; ctxs.vector.lineWidth = 2; ctxs.vector.setLineDash([5, 3]);
+                hist.forEach((p, i) => i===0 ? ctxs.vector.moveTo(p.x*w,p.y*h) : ctxs.vector.lineTo(p.x*w,p.y*h));
+                ctxs.vector.stroke(); ctxs.vector.setLineDash([]);
+
+                const pos = animTeams && animTeams[id] ? animTeams[id].pos : hist[hist.length-1];
+                const displayTime = animTeams && animTeams[id] ? animTeams[id].time : hist[hist.length-1].time;
+
+                if(pos) {
+                    ctxs.vector.save();
+                    ctxs.vector.shadowBlur = 15; ctxs.vector.shadowColor = team.color;
+                    ctxs.vector.fillStyle = "black";
+                    ctxs.vector.beginPath(); ctxs.vector.arc(pos.x*w, pos.y*h, 15, 0, Math.PI*2); ctxs.vector.fill();
+                    ctxs.vector.strokeStyle = team.color; ctxs.vector.lineWidth = 2; ctxs.vector.stroke();
+                    if(logos[id]) ctxs.vector.drawImage(logos[id], pos.x*w-11, pos.y*h-11, 22, 22);
+                    else {
+                        ctxs.vector.fillStyle = "white"; ctxs.vector.font = "bold 10px Arial"; ctxs.vector.textAlign = "center"; ctxs.vector.textBaseline = "middle";
+                        ctxs.vector.fillText(team.tag, pos.x*w, pos.y*h);
+                    }
+                    if(state.showTimer && displayTime !== undefined) {
+                        ctxs.vector.fillStyle = team.color; ctxs.vector.font = "bold 12px Segoe UI";
+                        ctxs.vector.shadowBlur = 5; ctxs.vector.shadowColor = "black";
+                        ctxs.vector.fillText(`${displayTime}m`, pos.x*w, pos.y*h - 25);
+                    }
+                    ctxs.vector.restore();
+                }
+            });
         }
 
-        function saveImage() {
-            const final = document.createElement('canvas');
-            const fctx = final.getContext('2d');
-            final.width = gameMap.naturalWidth;
-            final.height = gameMap.naturalHeight;
-            fctx.filter = gameMap.style.filter;
-            fctx.drawImage(gameMap, 0, 0);
-            fctx.filter = 'none';
-            fctx.drawImage(canvas, 0, 0, final.width, final.height);
-            const link = document.createElement('a');
-            link.download = 'ANALISE_LIPEE_CUSTOM.png';
-            link.href = final.toDataURL();
-            link.click();
+        function loop(t) {
+            if(!state.animating) return;
+            const elapsed = t - state.animStart;
+            const stepTime = 1500;
+            let animTeams = {};
+            Object.keys(state.history).forEach(id => {
+                const h = state.history[id]; if(h.length < 1) return;
+                const totalTime = (h.length - 1) * stepTime;
+                const time = elapsed % (totalTime || 1);
+                const idx = Math.floor(time / stepTime), pct = (time % stepTime) / stepTime;
+                if(h[idx] && h[idx+1]) {
+                    animTeams[id] = { pos: { x: h[idx].x + (h[idx+1].x - h[idx].x) * pct, y: h[idx].y + (h[idx+1].y - h[idx].y) * pct }, time: h[idx].time };
+                } else {
+                    animTeams[id] = { pos: h[h.length-1], time: h[h.length-1].time };
+                }
+            });
+            let animSafe = null;
+            if(state.safeHistory.length > 0) {
+                const sIdx = Math.min(Math.floor(elapsed / stepTime), state.safeHistory.length - 1);
+                animSafe = state.safeHistory[sIdx];
+            }
+            drawVectors(animTeams, animSafe);
+            requestAnimationFrame(loop);
         }
+
+        function render() { if(state.animating) return; drawHeat(); drawVectors(); }
+
+        document.getElementById('start-replay').onclick = () => {
+            state.animating = !state.animating;
+            document.getElementById('start-replay').innerText = state.animating ? "⏹️ PARAR" : "▶️ REPLAY";
+            if(state.animating) { state.animStart = performance.now(); requestAnimationFrame(loop); } else render();
+        };
+
+        // Eventos de atualização
+        document.getElementById('heat-radius').oninput = render;
+        document.getElementById('heat-opacity').oninput = render;
+        document.getElementById('map-bright').oninput = (e) => document.getElementById('game-map').style.filter = `brightness(${e.target.value}%) contrast(1.1)`;
+        
+        document.getElementById('toggle-vectors').onclick = () => { state.showVectors = !state.showVectors; render(); };
+        document.getElementById('toggle-timer').onclick = () => { state.showTimer = !state.showTimer; render(); };
+        document.getElementById('mode-safe').onclick = () => { state.safeMode = !state.safeMode; document.getElementById('mode-safe').innerText = state.safeMode ? "SAFE: ON" : "SAFE: OFF"; };
+        document.getElementById('team-slot').onchange = (e) => { state.activeSlot = e.target.value; updateHUD(); };
+        
+        function updateHUD() { 
+            document.getElementById('hud-pts').innerText = state.history[state.activeSlot].length; 
+            document.getElementById('hud-safes').innerText = state.safeHistory.length; 
+        }
+
+        window.onresize = resize;
+
+        // Exportação
+        document.getElementById('export-btn').onclick = () => {
+            const data = JSON.stringify({ teams: state.teams, history: state.history, safeHistory: state.safeHistory });
+            const blob = new Blob([data], {type: 'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `rota-v36.json`;
+            a.click();
+        };
+
+        // Importação
+        document.getElementById('import-btn').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const imported = JSON.parse(ev.target.result);
+                Object.assign(state.history, imported.history);
+                state.safeHistory = imported.safeHistory;
+                render();
+            };
+            reader.readAsText(e.target.files[0]);
+        };
     </script>
 </body>
 </html>
