@@ -7,18 +7,16 @@
         :root { --bg: #020205; --panel: #0b0b15; --cyan: #00f2ff; --neon: #39ff14; --safe: #00ff41; --heat: rgba(255, 69, 0, 0.6); }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; overflow: hidden; }
         .main-container { display: flex; width: 100%; height: 95vh; gap: 10px; }
-        .sidebar { width: 300px; background: var(--panel); padding: 15px; border-radius: 12px; border: 1px solid #1a1a2e; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .sidebar { width: 320px; background: var(--panel); padding: 15px; border-radius: 12px; border: 1px solid #1a1a2e; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .map-wrapper { flex: 1; position: relative; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid #222; }
         #map-area { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; position: relative; cursor: crosshair; }
         #map-darkener { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); pointer-events: none; z-index: 1; }
         
-        /* CANVASES */
         canvas { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; }
-        #c-heat { z-index: 2; mix-blend-mode: screen; } /* MAPA DE CALOR */
-        #c-lines { z-index: 3; } /* LINHAS NEON */
+        #c-heat { z-index: 2; mix-blend-mode: screen; }
+        #c-lines { z-index: 3; }
         #p-layer { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 10; pointer-events: none; }
 
-        /* AVISO VERDE */
         .warn-dot { 
             position: absolute; transform: translate(-50%, -50%); width: 22px; height: 22px; 
             background: var(--safe); border-radius: 50%; border: 2px solid #fff; 
@@ -26,7 +24,6 @@
             display: flex; align-items: center; justify-content: center; color: #000; font-weight: bold;
         }
 
-        /* MODAL */
         #edit-modal {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: #fff; color: #000; padding: 20px; border-radius: 12px;
@@ -39,52 +36,57 @@
         
         .timeline-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 85%; background: rgba(0,0,0,0.9); padding: 15px; border-radius: 50px; display: flex; gap: 15px; align-items: center; border: 1px solid var(--cyan); z-index: 100; }
         button { cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
-        button:active { transform: scale(0.95); }
+        button:hover { opacity: 0.8; }
         .btn-play { background: var(--neon); padding: 12px 25px; color: #000; font-size: 14px; }
-        .btn-warn { background: var(--safe); color: #000; padding: 10px; width: 100%; border: 2px solid #fff; }
         
-        input, select, textarea { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #333; background: #1a1a2e; color: #fff; box-sizing: border-box; }
         .control-group { background: #121225; padding: 12px; border-radius: 8px; border: 1px solid #1d1d3d; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div id="edit-modal">
     <h3 style="margin:0">Editar Aviso</h3>
-    <label style="font-size:10px; color:#666">TEXTO DO AVISO</label>
-    <textarea id="modal-text" rows="3" placeholder="Escreva aqui seu texto de aviso..."></textarea>
-    <label style="font-size:10px; color:#666">FOTO OU VÍDEO</label>
+    <textarea id="modal-text" rows="3" placeholder="Texto do aviso..."></textarea>
     <input type="file" id="modal-file" accept="image/*,video/*" onchange="previewMedia(this)">
     <div id="modal-preview" style="margin-top:10px"></div>
     <div style="display:flex; gap:10px">
         <button onclick="saveWarning()" style="background:var(--safe); flex:1; padding:10px">SALVAR</button>
-        <button onclick="closeModal()" style="background:#eee; flex:1; padding:10px">FECHAR</button>
+        <button onclick="closeModal()" style="background:#eee; color:#000; flex:1; padding:10px">FECHAR</button>
     </div>
 </div>
 
 <div class="main-container">
     <div class="sidebar">
-        <button onclick="document.getElementById('map-up').click()" style="background:var(--cyan); color:#000; padding:12px">🖼️ CARREGAR MAPA</button>
+        <button onclick="document.getElementById('map-up').click()" style="background:var(--cyan); color:#000; padding:12px; width:100%">🖼️ CARREGAR MAPA</button>
         <input type="file" id="map-up" style="display:none" onchange="loadMap(this)">
         
         <div class="control-group">
-            <label style="font-size:10px; color:#aaa">MARCADOR ESPECIAL</label>
-            <button class="btn-warn" onclick="setMode('warning')">📍 BOTÃO DE AVISO</button>
-            <p style="font-size:9px; color:#888; margin-top:5px">Crie o ponto verde no mapa e clique nele para abrir o layout de foto/vídeo.</p>
+            <label style="font-size:10px; color:var(--neon)">CONFIGURAÇÃO DE MOVIMENTO</label>
+            <label style="font-size:11px">TEMPO ATÉ O PRÓXIMO PONTO (SEG)</label>
+            <input type="number" id="travel-time" value="5" min="1" style="border: 1px solid var(--neon); color: var(--neon); font-size: 16px;">
+            <p style="font-size:9px; color:#888; margin-top:5px">Ex: Se colocar 10, a logo levará 10s para chegar do ponto anterior ao que você clicar agora.</p>
         </div>
 
         <div class="control-group">
-            <label style="font-size:10px; color:#aaa">MAPA DE CALOR & NEON</label>
-            <label style="font-size:9px">INTENSIDADE DO CALOR</label>
+            <label style="font-size:10px; color:#aaa">MARCADORES</label>
+            <button onclick="setMode('warning')" style="background:var(--safe); color:#000; padding:10px; width:100%; border:2px solid #fff">📍 ADICIONAR AVISO</button>
+        </div>
+
+        <div class="control-group">
+            <label style="font-size:10px; color:#aaa">TIME ATUAL</label>
+            <select id="team-select"></select>
+            <label style="font-size:9px; margin-top:5px">LISTA DE TIMES (SEPARE POR VÍRGULA)</label>
+            <input type="text" id="teams-input" value="LOUD, PAIN, FLUXO" onchange="updateTeams()">
+        </div>
+
+        <div class="control-group">
+            <label style="font-size:10px; color:#aaa">VISUAL</label>
+            <label style="font-size:9px">INTENSIDADE CALOR</label>
             <input type="range" id="heat-int" min="1" max="10" value="5" oninput="forceUpdate()">
-            <label style="font-size:9px">TAMANHO DA LOGO</label>
+            <label style="font-size:9px">TAMANHO LOGO</label>
             <input type="range" id="logo-size" min="20" max="80" value="45" oninput="forceUpdate()">
-        </div>
-
-        <div class="control-group">
-            <label style="font-size:10px; color:#aaa">CONFIGURAÇÃO DE TIME</label>
-            <select id="team-select" style="background:#000; color:#fff; border-color:#333"></select>
-            <input type="text" id="teams-input" value="LOUD, PAIN, FLUXO" onchange="updateTeams()" style="margin-top:5px">
         </div>
 
         <button onclick="exportData()" style="background:#28a745; color:#fff; padding:12px; margin-top:auto">💾 BAIXAR PROJETO (.JSON)</button>
@@ -100,27 +102,28 @@
         
         <div class="timeline-box">
             <span id="timer-txt" style="font-size:22px; color:var(--cyan); font-family:monospace; min-width:80px">00:00</span>
-            <input type="range" id="timeline" min="0" max="1200" value="0" style="flex:1; accent-color:var(--cyan)" oninput="manualSeek(this.value)">
+            <input type="range" id="timeline" min="0" max="600" value="0" style="flex:1; accent-color:var(--cyan)" oninput="manualSeek(this.value)">
             <button class="btn-play" id="play-btn" onclick="togglePlay()">▶ PLAY</button>
         </div>
     </div>
 </div>
 
 <script>
-    let teamData = {}, teamLogos = {}, warnings = [], playing = false, currentTime = 0, lastTimestamp = 0, currentMode = 'route';
+    let teamData = {}, warnings = [], playing = false, currentTime = 0, lastTimestamp = 0, currentMode = 'route';
     let activeWarningIndex = null;
     const neonColors = ['#00ffff','#ff00ff','#39ff14','#ffff00','#ff3131','#ff8c00','#00ffcc'];
     const cH = document.getElementById('c-heat'), cL = document.getElementById('c-lines'), mapArea = document.getElementById('map-area');
     const ctxH = cH.getContext('2d'), ctxL = cL.getContext('2d');
 
-    window.onload = () => { updateTeams(); resize(); };
+    window.onload = () => { updateTeams(); resize(); window.addEventListener('resize', resize); };
 
     function updateTeams() {
         const names = document.getElementById('teams-input').value.split(',').map(t => t.trim());
         const tSel = document.getElementById('team-select');
+        const currentSelected = tSel.value;
         tSel.innerHTML = '';
         names.forEach(t => {
-            tSel.innerHTML += `<option value="${t}">${t}</option>`;
+            tSel.innerHTML += `<option value="${t}" ${t === currentSelected ? 'selected' : ''}>${t}</option>`;
             if(!teamData[t]) teamData[t] = [];
         });
     }
@@ -137,8 +140,21 @@
             currentMode = 'route';
         } else {
             const team = document.getElementById('team-select').value;
-            teamData[team].push({x, y, time: currentTime});
-            teamData[team].sort((a,b) => a.time - b.time);
+            const travelTime = parseFloat(document.getElementById('travel-time').value) || 5;
+            
+            let pointTime = 0;
+            if (teamData[team].length > 0) {
+                // LÓGICA SOLICITADA: O tempo deste ponto é o tempo do último + o intervalo definido
+                const lastPoint = teamData[team][teamData[team].length - 1];
+                pointTime = lastPoint.time + travelTime;
+            }
+
+            teamData[team].push({x, y, time: pointTime});
+            
+            // Ajusta o máximo da timeline se o tempo ultrapassar o limite atual
+            if (pointTime > document.getElementById('timeline').max) {
+                document.getElementById('timeline').max = Math.ceil(pointTime + 10);
+            }
         }
         forceUpdate();
     }
@@ -153,7 +169,6 @@
             if(pts.length < 1) return;
             const col = neonColors[i % neonColors.length];
             
-            // Render Linhas Neon
             ctxL.shadowBlur = 15; ctxL.shadowColor = col; ctxL.strokeStyle = col; ctxL.lineWidth = 3;
             ctxL.beginPath();
             
@@ -161,10 +176,9 @@
                 const px = (p.x/100)*cL.width, py = (p.y/100)*cL.height;
                 idx === 0 ? ctxL.moveTo(px, py) : ctxL.lineTo(px, py);
                 
-                // MAPA DE CALOR (Heatmap) - Apenas para rotas de equipes
+                // Heatmap logic
                 let grad = ctxH.createRadialGradient(px, py, 0, px, py, 40);
                 grad.addColorStop(0, `rgba(255, 60, 0, ${hInt})`);
-                grad.addColorStop(0.5, `rgba(255, 150, 0, ${hInt/2})`);
                 grad.addColorStop(1, 'transparent');
                 ctxH.fillStyle = grad;
                 ctxH.fillRect(px-40, py-40, 80, 80);
@@ -190,7 +204,6 @@
             layer.appendChild(div);
         });
 
-        // Pontos de Aviso Verdes (Não geram calor)
         warnings.forEach((w, idx) => {
             const dot = document.createElement('div');
             dot.className = 'warn-dot';
@@ -208,29 +221,51 @@
         for(let i=0; i<pts.length-1; i++){
             if(t >= pts[i].time && t <= pts[i+1].time){
                 const pct = (t - pts[i].time) / (pts[i+1].time - pts[i].time);
-                return { x: pts[i].x + (pts[i+1].x - pts[i].x)*pct, y: pts[i].y + (pts[i+1].y - pts[i].y)*pct };
+                return { 
+                    x: pts[i].x + (pts[i+1].x - pts[i].x)*pct, 
+                    y: pts[i].y + (pts[i+1].y - pts[i].y)*pct 
+                };
             }
         }
         return pts[pts.length-1];
     }
 
-    function togglePlay() { playing = !playing; document.getElementById('play-btn').innerText = playing ? "⏸ PAUSE" : "▶ PLAY"; if(playing) { lastTimestamp = performance.now(); gameLoop(); } }
-    function gameLoop() { if(!playing) return; const now = performance.now(); currentTime += (now - lastTimestamp)/1000; lastTimestamp = now; forceUpdate(); requestAnimationFrame(gameLoop); }
+    function togglePlay() { 
+        playing = !playing; 
+        document.getElementById('play-btn').innerText = playing ? "⏸ PAUSE" : "▶ PLAY"; 
+        if(playing) { 
+            lastTimestamp = performance.now(); 
+            gameLoop(); 
+        } 
+    }
+
+    function gameLoop() { 
+        if(!playing) return; 
+        const now = performance.now(); 
+        currentTime += (now - lastTimestamp)/1000; 
+        lastTimestamp = now; 
+        
+        // Loop automático se chegar no fim
+        if (currentTime > document.getElementById('timeline').max) {
+            currentTime = 0;
+        }
+
+        forceUpdate(); 
+        requestAnimationFrame(gameLoop); 
+    }
+
     function manualSeek(v) { currentTime = parseFloat(v); forceUpdate(); }
-    function updateTimelineUI() { document.getElementById('timeline').value = currentTime; const m = Math.floor(currentTime/60), s = Math.floor(currentTime%60); document.getElementById('timer-txt').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }
+
+    function updateTimelineUI() { 
+        document.getElementById('timeline').value = currentTime; 
+        const m = Math.floor(currentTime/60), s = Math.floor(currentTime%60); 
+        document.getElementById('timer-txt').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; 
+    }
     
-    // MODAL FUNCTIONS
     function openModal(idx) {
         activeWarningIndex = idx;
         const w = warnings[idx];
         document.getElementById('modal-text').value = w.text;
-        const prev = document.getElementById('modal-preview');
-        prev.innerHTML = '';
-        if(w.src) {
-            const el = w.type === 'video' ? document.createElement('video') : document.createElement('img');
-            el.src = w.src; el.style.width = '100%'; if(w.type === 'video') el.controls = true;
-            prev.appendChild(el);
-        }
         document.getElementById('edit-modal').style.display = 'flex';
     }
 
@@ -254,8 +289,19 @@
     function saveWarning() { warnings[activeWarningIndex].text = document.getElementById('modal-text').value; closeModal(); }
     function closeModal() { document.getElementById('edit-modal').style.display = 'none'; }
     function loadMap(i){ if(i.files[0]){ const r=new FileReader(); r.onload=e=>{mapArea.style.backgroundImage=`url('${e.target.result}')`;setTimeout(resize,100);}; r.readAsDataURL(i.files[0]); }}
-    function resize() { const r = mapArea.getBoundingClientRect(); cH.width = cL.width = r.width; cH.height = cL.height = r.height; forceUpdate(); }
-    function exportData() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify({teamData, warnings})], {type:'application/json'})); a.download = 'analise_votation.json'; a.click(); }
+    function resize() { 
+        const r = mapArea.getBoundingClientRect(); 
+        cH.width = cL.width = r.width; 
+        cH.height = cL.height = r.height; 
+        forceUpdate(); 
+    }
+    function exportData() { 
+        const data = JSON.stringify({teamData, warnings});
+        const a = document.createElement('a'); 
+        a.href = URL.createObjectURL(new Blob([data], {type:'application/json'})); 
+        a.download = 'analise_movimentacao.json'; 
+        a.click(); 
+    }
 </script>
 </body>
 </html>
