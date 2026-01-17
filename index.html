@@ -2,60 +2,57 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>ANALYST PRO - TIMELINE SYNC</title>
+    <title>ANALYST PRO - TIME DIFFERENCE LOGIC</title>
     <style>
-        :root { --bg: #020205; --panel: #0b0b15; --cyan: #00f2ff; --neon: #39ff14; --safe: #00ff41; }
+        :root { --bg: #020205; --panel: #0b0b15; --cyan: #00f2ff; --neon: #39ff14; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 10px; overflow: hidden; }
         .main-container { display: flex; width: 100%; height: 95vh; gap: 10px; }
-        .sidebar { width: 320px; background: var(--panel); padding: 15px; border-radius: 12px; border: 1px solid #1a1a2e; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .sidebar { width: 320px; background: var(--panel); padding: 15px; border-radius: 12px; border: 1px solid #1a1a2e; display: flex; flex-direction: column; gap: 10px; }
         .map-wrapper { flex: 1; position: relative; background: #000; border-radius: 8px; overflow: hidden; border: 1px solid #222; }
         #map-area { width: 100%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: center; position: relative; cursor: crosshair; }
         #map-darkener { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); pointer-events: none; z-index: 1; }
-        
-        canvas { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; }
-        #c-lines { z-index: 3; }
+        canvas { position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 3; }
         #p-layer { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 10; pointer-events: none; }
 
+        /* Estilo da Logo e Etiqueta */
         .team-marker { position: absolute; transform: translate(-50%, -50%); border-radius: 50%; border: 3px solid; background: #fff; z-index: 20; }
-        .time-label { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background: #000; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 10px; white-space: nowrap; border: 1px solid currentColor; font-weight: bold; }
-        
+        .label-container { position: absolute; top: -38px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+        .label-tag { background: var(--team-color, #000); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; white-space: nowrap; border: 1px solid rgba(255,255,255,0.3); }
+
         .timeline-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 85%; background: rgba(0,0,0,0.95); padding: 15px; border-radius: 50px; display: flex; gap: 15px; align-items: center; border: 1px solid var(--cyan); z-index: 100; }
         .btn-play { background: var(--neon); padding: 12px 25px; color: #000; font-weight: bold; border-radius: 30px; cursor: pointer; border: none; }
         
         .control-group { background: #121225; padding: 12px; border-radius: 8px; border: 1px solid #1d1d3d; }
         input, select { width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #333; background: #000; color: #fff; box-sizing: border-box; }
         label { font-size: 11px; color: #aaa; margin-bottom: 5px; display: block; font-weight: bold; }
-        
-        .static-point { position: absolute; transform: translate(-50%, -50%); width: 10px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 50%; z-index: 5; pointer-events: none; }
     </style>
 </head>
 <body>
 
 <div class="main-container">
     <div class="sidebar">
-        <button onclick="document.getElementById('map-up').click()" style="background:var(--cyan); color:#000; padding:12px; font-weight:bold; cursor:pointer; border-radius:6px; border:none; width:100%">🖼️ CARREGAR MAPA</button>
+        <button onclick="document.getElementById('map-up').click()" style="background:var(--cyan); color:#000; padding:12px; font-weight:bold; cursor:pointer; border-radius:6px; border:none;">🖼️ CARREGAR MAPA</button>
         <input type="file" id="map-up" style="display:none" onchange="loadMap(this)">
         
         <div class="control-group">
-            <label>MARCAR PASSAGEM DA LOGO (MM:SS)</label>
-            <input type="text" id="pass-time" value="01:30" placeholder="Ex: 01:30" style="color:var(--neon); font-size:22px; text-align:center; font-family: monospace;">
-            <p style="font-size:10px; color:#777; margin-top:5px">Defina o tempo acima e clique no mapa para criar o ponto de destino da logo.</p>
+            <label>DEFINIR TEMPO DE CHEGADA (MM:SS)</label>
+            <input type="text" id="pass-time" value="01:30" style="color:var(--neon); font-size:22px; text-align:center; font-family: monospace;">
+            <p style="font-size:10px; color:#666; margin-top:5px">A logo levará (Tempo Atual - Tempo Anterior) para chegar aqui.</p>
         </div>
 
         <div class="control-group">
             <label>TIME SELECIONADO</label>
             <select id="team-select"></select>
-            <label style="margin-top:10px">GERENCIAR TIMES (VÍRGULA)</label>
+            <label style="margin-top:10px">LISTA DE TIMES</label>
             <input type="text" id="teams-input" value="LOUD, PAIN, FLUXO" onchange="updateTeams()">
         </div>
 
         <div class="control-group">
             <label>TAMANHO DA LOGO</label>
-            <input type="range" id="logo-size" min="20" max="70" value="40" oninput="forceUpdate()">
+            <input type="range" id="logo-size" min="20" max="80" value="45" oninput="forceUpdate()">
         </div>
 
-        <button onclick="clearLastPoint()" style="background:#ff3131; color:#fff; padding:10px; cursor:pointer; border:none; border-radius:6px; font-weight:bold">↩ APAGAR ÚLTIMO PONTO</button>
-        <button onclick="exportData()" style="background:#28a745; color:#fff; padding:12px; margin-top:auto; font-weight:bold; border:none; border-radius:6px; cursor:pointer">💾 BAIXAR PROJETO</button>
+        <button onclick="teamData[document.getElementById('team-select').value] = []; forceUpdate();" style="background:#ff3131; color:#fff; padding:10px; cursor:pointer; border:none; border-radius:6px;">🗑️ LIMPAR TIME ATUAL</button>
     </div>
 
     <div class="map-wrapper">
@@ -75,7 +72,7 @@
 
 <script>
     let teamData = {}, playing = false, currentTime = 0, lastTimestamp = 0;
-    const neonColors = ['#00ffff','#ff00ff','#39ff14','#ffff00','#ff3131','#ff8c00','#00ffcc'];
+    const neonColors = ['#ff0000','#ff8000','#ffff00','#00ff00','#00ffff','#0080ff','#8000ff','#ff00ff','#ffffff'];
     const cL = document.getElementById('c-lines'), mapArea = document.getElementById('map-area');
     const ctxL = cL.getContext('2d');
 
@@ -84,59 +81,39 @@
     function updateTeams() {
         const names = document.getElementById('teams-input').value.split(',').map(t => t.trim());
         const tSel = document.getElementById('team-select');
-        const currentSelected = tSel.value;
-        tSel.innerHTML = '';
-        names.forEach(t => {
-            tSel.innerHTML += `<option value="${t}" ${t === currentSelected ? 'selected' : ''}>${t}</option>`;
-            if(!teamData[t]) teamData[t] = [];
-        });
+        names.forEach(t => { if(!teamData[t]) teamData[t] = []; });
+        tSel.innerHTML = names.map(t => `<option value="${t}">${t}</option>`).join('');
     }
 
-    // Converte MM:SS para total de segundos
     function timeToSeconds(str) {
-        try {
-            const p = str.split(':');
-            if (p.length !== 2) return 0;
-            return (parseInt(p[0]) * 60) + parseInt(p[1]);
-        } catch(e) { return 0; }
+        const p = str.split(':');
+        return p.length !== 2 ? 0 : (parseInt(p[0]) * 60) + parseInt(p[1]);
     }
 
     function handleMapClick(e) {
         const r = mapArea.getBoundingClientRect();
         const x = ((e.clientX - r.left) / r.width) * 100;
         const y = ((e.clientY - r.top) / r.height) * 100;
-
         const team = document.getElementById('team-select').value;
-        const inputTime = timeToSeconds(document.getElementById('pass-time').value);
+        const targetTime = timeToSeconds(document.getElementById('pass-time').value);
 
-        // Adiciona ponto e garante ordem cronológica
-        teamData[team].push({x, y, time: inputTime});
+        // REGRA SOLICITADA: Adiciona o ponto com o tempo absoluto. 
+        // A animação calculará a diferença (ex: 02:30 - 01:30) automaticamente.
+        teamData[team].push({x, y, time: targetTime});
         teamData[team].sort((a,b) => a.time - b.time);
 
-        // Atualiza limite da timeline
-        if (inputTime > document.getElementById('timeline').max) {
-            document.getElementById('timeline').max = inputTime + 30;
+        if (targetTime > document.getElementById('timeline').max) {
+            document.getElementById('timeline').max = targetTime + 20;
         }
-
         forceUpdate();
-    }
-
-    function clearLastPoint() {
-        const team = document.getElementById('team-select').value;
-        if(teamData[team].length > 0) {
-            teamData[team].pop();
-            forceUpdate();
-        }
     }
 
     function forceUpdate() {
         ctxL.clearRect(0, 0, cL.width, cL.height);
-        
         Object.keys(teamData).forEach((t, i) => {
             const pts = teamData[t];
             if(pts.length < 2) return;
             const col = neonColors[i % neonColors.length];
-            
             ctxL.shadowBlur = 10; ctxL.shadowColor = col; ctxL.strokeStyle = col; ctxL.lineWidth = 2;
             ctxL.beginPath();
             pts.forEach((p, idx) => {
@@ -156,23 +133,21 @@
             const pts = teamData[t];
             if(!pts.length) return;
 
-            // Marcadores visíveis dos pontos fixos (bolinhas fracas)
-            pts.forEach(p => {
-                const dot = document.createElement('div');
-                dot.className = 'static-point';
-                dot.style = `left:${p.x}%; top:${p.y}%;`;
-                layer.appendChild(dot);
-            });
-
-            // Logo que se move
             const pos = interpolate(pts, currentTime);
             const col = neonColors[i % neonColors.length];
+            
             const div = document.createElement('div');
             div.className = 'team-marker';
             div.style = `left:${pos.x}%; top:${pos.y}%; width:${lSize}px; height:${lSize}px; border-color:${col}; box-shadow: 0 0 15px ${col};`;
             
             const m = Math.floor(currentTime/60), s = Math.floor(currentTime%60);
-            div.innerHTML = `<div class="time-label" style="border-color:${col}">${t} [${m}:${s.toString().padStart(2,'0')}]</div>`;
+            const timeStr = `${m}:${s.toString().padStart(2,'0')}`;
+            
+            div.innerHTML = `
+                <div class="label-container">
+                    <div class="label-tag" style="--team-color: ${col}">${t} [${timeStr}]</div>
+                </div>
+            `;
             layer.appendChild(div);
         });
         updateTimelineUI();
@@ -181,11 +156,13 @@
     function interpolate(pts, t) {
         if(t <= pts[0].time) return pts[0];
         if(t >= pts[pts.length-1].time) return pts[pts.length-1];
-        
         for(let i=0; i<pts.length-1; i++){
             if(t >= pts[i].time && t <= pts[i+1].time){
-                // Cálculo de interpolação: T0 - T1 gera a velocidade correta
-                const progress = (t - pts[i].time) / (pts[i+1].time - pts[i].time);
+                // AQUI A MÁGICA ACONTECE:
+                // Diferença de tempo entre os pontos define a velocidade do progresso
+                const timeDiff = pts[i+1].time - pts[i].time; 
+                const progress = (t - pts[i].time) / timeDiff;
+                
                 return { 
                     x: pts[i].x + (pts[i+1].x - pts[i].x) * progress, 
                     y: pts[i].y + (pts[i+1].y - pts[i].y) * progress 
@@ -198,10 +175,7 @@
     function togglePlay() { 
         playing = !playing; 
         document.getElementById('play-btn').innerText = playing ? "⏸ PAUSE" : "▶ PLAY"; 
-        if(playing) { 
-            lastTimestamp = performance.now(); 
-            gameLoop(); 
-        } 
+        if(playing) { lastTimestamp = performance.now(); gameLoop(); } 
     }
 
     function gameLoop() { 
@@ -209,36 +183,22 @@
         const now = performance.now(); 
         currentTime += (now - lastTimestamp)/1000; 
         lastTimestamp = now; 
-        
-        if (currentTime > document.getElementById('timeline').max) {
-            playing = false;
-            document.getElementById('play-btn').innerText = "▶ PLAY";
+        if (currentTime > document.getElementById('timeline').max) { 
+            playing = false; 
+            document.getElementById('play-btn').innerText = "▶ PLAY"; 
         }
-        
         forceUpdate(); 
         requestAnimationFrame(gameLoop); 
     }
 
-    function manualSeek(v) { 
-        currentTime = parseFloat(v); 
-        forceUpdate(); 
-    }
-
+    function manualSeek(v) { currentTime = parseFloat(v); forceUpdate(); }
     function updateTimelineUI() { 
         document.getElementById('timeline').value = currentTime; 
         const m = Math.floor(currentTime/60), s = Math.floor(currentTime%60); 
         document.getElementById('timer-txt').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; 
     }
-    
     function loadMap(i){ if(i.files[0]){ const r=new FileReader(); r.onload=e=>{mapArea.style.backgroundImage=`url('${e.target.result}')`;setTimeout(resize,100);}; r.readAsDataURL(i.files[0]); }}
     function resize() { const r = mapArea.getBoundingClientRect(); cL.width = r.width; cL.height = r.height; forceUpdate(); }
-    function exportData() { 
-        const data = JSON.stringify({teamData});
-        const a = document.createElement('a'); 
-        a.href = URL.createObjectURL(new Blob([data], {type:'application/json'})); 
-        a.download = 'projeto_analise.json'; 
-        a.click(); 
-    }
 </script>
 </body>
 </html>
