@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COACH LIPEE - MANUAL TIME V36</title>
+    <title>COACH LIPEE - MANUAL TIME V36 PRO</title>
     <style>
-        :root { --neon-green: #00FF00; --dark-bg: #050505; --panel-bg: rgba(15, 15, 15, 0.98); }
+        :root { --neon-green: #00FF00; --alert-green: #2ecc71; --dark-bg: #050505; --panel-bg: rgba(15, 15, 15, 0.98); }
         body { background: var(--dark-bg); margin: 0; font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; }
         
         #controls-panel {
@@ -19,6 +19,7 @@
         
         .action-btn { padding: 8px 15px; border-radius: 4px; border: none; font-weight: 900; cursor: pointer; font-size: 10px; text-transform: uppercase; transition: 0.2s; }
         .btn-safe { background: #f1c40f; color: #000; }
+        .btn-alert { background: var(--alert-green); color: #000; }
         .btn-view { background: #3498db; color: #fff; }
         .btn-time { background: #e74c3c; color: #fff; }
         .btn-anim { background: #9b59b6; color: #fff; box-shadow: 0 0 10px #9b59b6; }
@@ -33,6 +34,14 @@
         #vector-layer { z-index: 10; }
         #interaction-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; z-index: 50; pointer-events: all; }
 
+        /* MODAL DE AVISO */
+        #alert-modal { 
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            background: #111; padding: 20px; border: 2px solid var(--alert-green); z-index: 200; 
+            border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.8); width: 300px;
+        }
+        #alert-modal textarea { width: 100%; background: #222; color: #fff; border: 1px solid #444; padding: 10px; box-sizing: border-box; margin: 10px 0; }
+
         #hud { position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.8); padding: 10px; border-radius: 4px; border-left: 4px solid var(--neon-green); font-size: 11px; z-index: 60; pointer-events: none; }
         .input-dark { background:#222; color:#fff; border:1px solid #444; padding: 2px; }
     </style>
@@ -44,35 +53,31 @@
         <div class="control-group"><label>🌑 BRILHO</label><input type="range" id="map-bright" min="10" max="100" value="60"></div>
         
         <div class="control-group">
-            <label>🔥 RAIO CALOR</label>
-            <input type="range" id="heat-radius" min="10" max="150" value="40">
-        </div>
-        <div class="control-group">
-            <label>🔆 DENSIDADE</label>
-            <input type="range" id="heat-opacity" min="0.1" max="1.0" step="0.1" value="0.5">
-        </div>
-
-        <div class="control-group">
             <label>SLOT</label><select id="team-slot" class="input-dark"></select>
-            <input type="text" id="team-tag" placeholder="TAG" style="width:40px;" class="input-dark">
-            <label>⏱️ MIN</label><input type="text" id="manual-min" placeholder="Ex: 5" style="width:35px;" class="input-dark">
+            <input type="text" id="manual-min" placeholder="Min" style="width:35px;" class="input-dark">
         </div>
         
         <div class="control-group">
-            <label>LOGO</label><input type="file" id="up-logo" accept="image/*" style="width: 80px; font-size: 8px;">
-        </div>
-
-        <div class="control-group">
             <button class="action-btn btn-safe" id="mode-safe">SAFE: OFF</button>
+            <button class="action-btn btn-alert" id="mode-alert">⚠️ AVISO: OFF</button>
             <button class="action-btn btn-view" id="toggle-vectors">👁️ VER</button>
-            <button class="action-btn btn-time" id="toggle-timer">⏱️ TEMPO</button>
         </div>
 
         <div style="display: flex; gap: 6px;">
             <button class="action-btn btn-anim" id="start-replay">▶️ REPLAY</button>
             <button class="action-btn btn-save" id="export-btn">💾 SALVAR</button>
-            <label class="action-btn" style="background:#e67e22; color:#fff; margin:0; cursor:pointer">📂 CARREGAR <input type="file" id="import-btn" style="display:none" accept=".json"></label>
             <button class="action-btn" style="background:#444; color:#fff" onclick="location.reload()">🗑️ RESET</button>
+        </div>
+    </div>
+
+    <div id="alert-modal">
+        <h3 style="color:var(--alert-green); margin:0; font-size:14px;">NOVO AVISO NO MAPA</h3>
+        <textarea id="alert-text" rows="3" placeholder="O que aconteceu aqui?"></textarea>
+        <label style="font-size:10px; display:block; margin-bottom:5px;">UPLOAD FOTO/VÍDEO:</label>
+        <input type="file" id="alert-media" accept="image/*,video/*" style="font-size:10px; color:white; margin-bottom:15px;">
+        <div style="display:flex; gap:10px;">
+            <button class="action-btn btn-save" id="save-alert-btn" style="flex:1">SALVAR</button>
+            <button class="action-btn" style="background:#444; color:#fff; flex:1" id="cancel-alert-btn">SAIR</button>
         </div>
     </div>
 
@@ -83,18 +88,18 @@
             <canvas id="vector-layer" class="layer"></canvas>
             <div id="interaction-layer"></div>
         </div>
-        <div id="hud">STATUS: <span id="hud-mode" style="color:var(--neon-green)">ROTAÇÃO</span><br>SAFES: <span id="hud-safes">0</span> | PONTOS: <span id="hud-pts">0</span></div>
+        <div id="hud">STATUS: <span id="hud-mode" style="color:var(--neon-green)">ROTAÇÃO</span><br>AVISOS: <span id="hud-alerts">0</span> | PONTOS: <span id="hud-pts">0</span></div>
     </div>
 
     <script>
         const state = { 
-            mapLoaded: false, safeMode: false, showVectors: true, showTimer: true, activeSlot: 1, animating: false, 
-            teams: {}, history: {}, safeHistory: [], animStart: 0 
+            mapLoaded: false, safeMode: false, alertMode: false, showVectors: true, showTimer: true, 
+            activeSlot: 1, animating: false, teams: {}, history: {}, safeHistory: [], alerts: [], animStart: 0 
         };
         const logos = {};
-        const PALETTE = [[0,0,255], [0,104,55], [26,152,80], [166,217,106], [217,239,139], [254,224,139], [253,174,97], [244,109,67], [215,48,39], [165,0,38]];
         const canvases = { heat: document.getElementById('heatmap-layer'), vector: document.getElementById('vector-layer') };
         const ctxs = { heat: canvases.heat.getContext('2d'), vector: canvases.vector.getContext('2d') };
+        let pendingCoord = null;
 
         for(let i=1; i<=12; i++) {
             state.teams[i] = { tag: `T${i}`, color: getTeamColor(i) };
@@ -102,24 +107,13 @@
             document.getElementById('team-slot').add(new Option(`Slot ${i}`, i));
         }
 
-        function getTeamColor(i) {
-            return ['#FF0000', '#00FF00', '#0080FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#CC00FF', '#00FF7F', '#FFD700', '#FF69B4', '#40E0D0'][i-1];
-        }
+        function getTeamColor(i) { return ['#FF0000', '#00FF00', '#0080FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#CC00FF', '#00FF7F', '#FFD700', '#FF69B4', '#40E0D0'][i-1]; }
 
         document.getElementById('up-map').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (ev) => { 
                 document.getElementById('game-map').src = ev.target.result; 
                 document.getElementById('game-map').onload = () => { state.mapLoaded = true; resize(); }; 
-            };
-            reader.readAsDataURL(e.target.files[0]);
-        };
-
-        document.getElementById('up-logo').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = new Image(); img.src = ev.target.result;
-                img.onload = () => { logos[state.activeSlot] = img; render(); };
             };
             reader.readAsDataURL(e.target.files[0]);
         };
@@ -136,166 +130,112 @@
             const rect = e.target.getBoundingClientRect();
             const nx = (e.clientX - rect.left) / rect.width;
             const ny = (e.clientY - rect.top) / rect.height;
-            const manualMin = document.getElementById('manual-min').value || "0";
 
-            if(state.safeMode) {
-                state.safeHistory.push({ x: nx, y: ny, r: 25 / 100 });
+            if(state.alertMode) {
+                pendingCoord = { x: nx, y: ny };
+                document.getElementById('alert-modal').style.display = 'block';
+            } else if(state.safeMode) {
+                state.safeHistory.push({ x: nx, y: ny, r: 0.25 });
+                render();
             } else {
+                const manualMin = document.getElementById('manual-min').value || "0";
                 state.history[state.activeSlot].push({ x: nx, y: ny, time: manualMin });
+                render();
             }
-            updateHUD(); render();
+            updateHUD();
         };
 
-        function drawHeat() {
-            const w = canvases.heat.width, h = canvases.heat.height;
-            if(w === 0 || !state.mapLoaded) return;
-
-            const radius = parseInt(document.getElementById('heat-radius').value);
-            const opacity = parseFloat(document.getElementById('heat-opacity').value);
-
-            const temp = document.createElement('canvas'); 
-            temp.width = w * 0.5; temp.height = h * 0.5;
-            const tctx = temp.getContext('2d'); 
+        // Salvar Alerta
+        document.getElementById('save-alert-btn').onclick = () => {
+            const text = document.getElementById('alert-text').value;
+            const file = document.getElementById('alert-media').files[0];
             
-            tctx.fillStyle = "rgb(0,0,255)"; 
-            tctx.fillRect(0,0,temp.width,temp.height);
-            tctx.globalCompositeOperation = "lighter";
-
-            Object.values(state.history).forEach(hist => hist.forEach(p => {
-                let g = tctx.createRadialGradient(p.x*temp.width, p.y*temp.height, 0, p.x*temp.width, p.y*temp.height, radius/2);
-                g.addColorStop(0, "rgba(255,255,255,0.5)"); 
-                g.addColorStop(1, "rgba(255,255,255,0)");
-                tctx.fillStyle = g; 
-                tctx.beginPath(); 
-                tctx.arc(p.x*temp.width, p.y*temp.height, radius/2, 0, Math.PI*2); 
-                tctx.fill();
-            }));
-
-            const data = tctx.getImageData(0,0,temp.width,temp.height);
-            for(let i=0; i<data.data.length; i+=4) { 
-                const b = data.data[i]; 
-                const c = PALETTE[Math.min(9, Math.floor((b/255)*12))] || PALETTE[0]; 
-                data.data[i] = c[0]; data.data[i+1] = c[1]; data.data[i+2] = c[2]; 
+            const newAlert = { ...pendingCoord, text: text, media: null, type: null };
+            
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    newAlert.media = ev.target.result;
+                    newAlert.type = file.type;
+                    state.alerts.push(newAlert);
+                    finalizeAlert();
+                };
+                reader.readAsDataURL(file);
+            } else {
+                state.alerts.push(newAlert);
+                finalizeAlert();
             }
-            tctx.putImageData(data,0,0); 
-            ctxs.heat.clearRect(0,0,w,h); 
-            ctxs.heat.globalAlpha = opacity; 
-            ctxs.heat.drawImage(temp, 0, 0, w, h);
+        };
+
+        function finalizeAlert() {
+            document.getElementById('alert-modal').style.display = 'none';
+            document.getElementById('alert-text').value = '';
+            document.getElementById('alert-media').value = '';
+            updateHUD();
+            render();
         }
+
+        document.getElementById('cancel-alert-btn').onclick = () => document.getElementById('alert-modal').style.display = 'none';
 
         function drawVectors(animTeams = null, animSafe = null) {
             const w = canvases.vector.width, h = canvases.vector.height;
             ctxs.vector.clearRect(0,0,w,h);
-            if(!state.showVectors) return;
+            if(!state.showVectors || w === 0) return;
 
+            // Safe
             const safe = animSafe || (state.safeHistory.length > 0 ? state.safeHistory[state.safeHistory.length - 1] : null);
             if(safe) {
-                ctxs.vector.beginPath(); ctxs.vector.setLineDash([10, 5]); ctxs.vector.strokeStyle = "white"; ctxs.vector.lineWidth = 3;
+                ctxs.vector.beginPath(); ctxs.vector.setLineDash([10, 5]); ctxs.vector.strokeStyle = "white"; 
                 ctxs.vector.arc(safe.x*w, safe.y*h, safe.r*w, 0, Math.PI*2); ctxs.vector.stroke(); ctxs.vector.setLineDash([]);
             }
 
+            // Alertas Verdes
+            state.alerts.forEach(alert => {
+                ctxs.vector.fillStyle = "#2ecc71";
+                ctxs.vector.beginPath(); ctxs.vector.arc(alert.x*w, alert.y*h, 10, 0, Math.PI*2); ctxs.vector.fill();
+                ctxs.vector.fillStyle = "black"; ctxs.vector.font = "bold 12px Arial"; ctxs.vector.textAlign = "center";
+                ctxs.vector.fillText("!", alert.x*w, alert.y*h + 4);
+                ctxs.vector.fillStyle = "white"; ctxs.vector.font = "9px Arial";
+                ctxs.vector.fillText(alert.text.substring(0, 15), alert.x*w, alert.y*h + 20);
+            });
+
+            // Rotas dos Times
             Object.keys(state.history).forEach(id => {
                 const hist = state.history[id], team = state.teams[id];
                 if(hist.length === 0) return;
-
-                ctxs.vector.beginPath(); ctxs.vector.strokeStyle = team.color; ctxs.vector.lineWidth = 2; ctxs.vector.setLineDash([5, 3]);
+                ctxs.vector.beginPath(); ctxs.vector.strokeStyle = team.color; ctxs.vector.lineWidth = 2;
                 hist.forEach((p, i) => i===0 ? ctxs.vector.moveTo(p.x*w,p.y*h) : ctxs.vector.lineTo(p.x*w,p.y*h));
-                ctxs.vector.stroke(); ctxs.vector.setLineDash([]);
-
-                const pos = animTeams && animTeams[id] ? animTeams[id].pos : hist[hist.length-1];
-                const displayTime = animTeams && animTeams[id] ? animTeams[id].time : hist[hist.length-1].time;
-
-                if(pos) {
-                    ctxs.vector.save();
-                    ctxs.vector.shadowBlur = 15; ctxs.vector.shadowColor = team.color;
-                    ctxs.vector.fillStyle = "black";
-                    ctxs.vector.beginPath(); ctxs.vector.arc(pos.x*w, pos.y*h, 15, 0, Math.PI*2); ctxs.vector.fill();
-                    ctxs.vector.strokeStyle = team.color; ctxs.vector.lineWidth = 2; ctxs.vector.stroke();
-                    if(logos[id]) ctxs.vector.drawImage(logos[id], pos.x*w-11, pos.y*h-11, 22, 22);
-                    else {
-                        ctxs.vector.fillStyle = "white"; ctxs.vector.font = "bold 10px Arial"; ctxs.vector.textAlign = "center"; ctxs.vector.textBaseline = "middle";
-                        ctxs.vector.fillText(team.tag, pos.x*w, pos.y*h);
-                    }
-                    if(state.showTimer && displayTime !== undefined) {
-                        ctxs.vector.fillStyle = team.color; ctxs.vector.font = "bold 12px Segoe UI";
-                        ctxs.vector.shadowBlur = 5; ctxs.vector.shadowColor = "black";
-                        ctxs.vector.fillText(`${displayTime}m`, pos.x*w, pos.y*h - 25);
-                    }
-                    ctxs.vector.restore();
-                }
+                ctxs.vector.stroke();
+                const pos = hist[hist.length-1];
+                ctxs.vector.fillStyle = team.color; ctxs.vector.beginPath(); ctxs.vector.arc(pos.x*w, pos.y*h, 6, 0, Math.PI*2); ctxs.vector.fill();
             });
         }
 
-        function loop(t) {
-            if(!state.animating) return;
-            const elapsed = t - state.animStart;
-            const stepTime = 1500;
-            let animTeams = {};
-            Object.keys(state.history).forEach(id => {
-                const h = state.history[id]; if(h.length < 1) return;
-                const totalTime = (h.length - 1) * stepTime;
-                const time = elapsed % (totalTime || 1);
-                const idx = Math.floor(time / stepTime), pct = (time % stepTime) / stepTime;
-                if(h[idx] && h[idx+1]) {
-                    animTeams[id] = { pos: { x: h[idx].x + (h[idx+1].x - h[idx].x) * pct, y: h[idx].y + (h[idx+1].y - h[idx].y) * pct }, time: h[idx].time };
-                } else {
-                    animTeams[id] = { pos: h[h.length-1], time: h[h.length-1].time };
-                }
-            });
-            let animSafe = null;
-            if(state.safeHistory.length > 0) {
-                const sIdx = Math.min(Math.floor(elapsed / stepTime), state.safeHistory.length - 1);
-                animSafe = state.safeHistory[sIdx];
-            }
-            drawVectors(animTeams, animSafe);
-            requestAnimationFrame(loop);
-        }
+        function render() { drawVectors(); }
 
-        function render() { if(state.animating) return; drawHeat(); drawVectors(); }
-
-        document.getElementById('start-replay').onclick = () => {
-            state.animating = !state.animating;
-            document.getElementById('start-replay').innerText = state.animating ? "⏹️ PARAR" : "▶️ REPLAY";
-            if(state.animating) { state.animStart = performance.now(); requestAnimationFrame(loop); } else render();
+        // Alternadores de Modo
+        document.getElementById('mode-safe').onclick = () => {
+            state.safeMode = !state.safeMode; state.alertMode = false;
+            document.getElementById('mode-safe').innerText = state.safeMode ? "SAFE: ON" : "SAFE: OFF";
+            document.getElementById('mode-alert').innerText = "⚠️ AVISO: OFF";
         };
 
-        // Eventos de atualização
-        document.getElementById('heat-radius').oninput = render;
-        document.getElementById('heat-opacity').oninput = render;
-        document.getElementById('map-bright').oninput = (e) => document.getElementById('game-map').style.filter = `brightness(${e.target.value}%) contrast(1.1)`;
-        
-        document.getElementById('toggle-vectors').onclick = () => { state.showVectors = !state.showVectors; render(); };
-        document.getElementById('toggle-timer').onclick = () => { state.showTimer = !state.showTimer; render(); };
-        document.getElementById('mode-safe').onclick = () => { state.safeMode = !state.safeMode; document.getElementById('mode-safe').innerText = state.safeMode ? "SAFE: ON" : "SAFE: OFF"; };
-        document.getElementById('team-slot').onchange = (e) => { state.activeSlot = e.target.value; updateHUD(); };
-        
+        document.getElementById('mode-alert').onclick = () => {
+            state.alertMode = !state.alertMode; state.safeMode = false;
+            document.getElementById('mode-alert').innerText = state.alertMode ? "AVISO: ON" : "AVISO: OFF";
+            document.getElementById('mode-safe').innerText = "SAFE: OFF";
+        };
+
         function updateHUD() { 
             document.getElementById('hud-pts').innerText = state.history[state.activeSlot].length; 
-            document.getElementById('hud-safes').innerText = state.safeHistory.length; 
+            document.getElementById('hud-alerts').innerText = state.alerts.length; 
         }
 
         window.onresize = resize;
-
-        // Exportação
         document.getElementById('export-btn').onclick = () => {
-            const data = JSON.stringify({ teams: state.teams, history: state.history, safeHistory: state.safeHistory });
+            const data = JSON.stringify(state);
             const blob = new Blob([data], {type: 'application/json'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `rota-v36.json`;
-            a.click();
-        };
-
-        // Importação
-        document.getElementById('import-btn').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const imported = JSON.parse(ev.target.result);
-                Object.assign(state.history, imported.history);
-                state.safeHistory = imported.safeHistory;
-                render();
-            };
-            reader.readAsText(e.target.files[0]);
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `rota-v36-completa.json`; a.click();
         };
     </script>
 </body>
