@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coach Lipee - Pro Slot Control V10</title>
+    <title>Coach Lipee - Custom Exposure V12</title>
     <style>
         body { background: #050505; margin: 0; font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; }
         
@@ -13,21 +13,21 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999;
         }
 
-        .splash-logo { font-size: 3rem; font-weight: bold; color: #00FF00; text-shadow: 0 0 30px #00FF00; margin-bottom: 30px; text-align: center; }
+        .splash-logo { font-size: 3rem; font-weight: bold; color: #00FF00; text-shadow: 0 0 30px #00FF00; margin-bottom: 10px; text-align: center; }
 
         #main-app { display: none; flex-direction: column; align-items: center; height: 100vh; padding: 10px; }
         
         #controls {
-            background: rgba(10, 10, 10, 0.98); padding: 12px; border-radius: 12px;
+            background: rgba(15, 15, 15, 0.98); padding: 12px; border-radius: 12px;
             display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
             border: 1px solid #333; margin-bottom: 10px; width: 98%;
-            box-shadow: 0 0 25px rgba(0, 255, 0, 0.15);
+            box-shadow: 0 0 25px rgba(0, 255, 0, 0.1);
         }
 
         .config-group { background: #1a1a1a; padding: 6px 12px; border-radius: 8px; border: 1px solid #444; display: flex; align-items: center; gap: 8px; font-size: 11px; }
 
-        #map-container { position: relative; border: 2px solid #222; line-height: 0; background: #000; overflow: hidden; cursor: crosshair; }
-        #game-map { filter: brightness(0.2) contrast(1.3); max-width: 100%; max-height: 75vh; }
+        #map-container { position: relative; border: 2px solid #444; line-height: 0; background: #111; overflow: hidden; cursor: crosshair; }
+        #game-map { transition: filter 0.1s; max-width: 100%; max-height: 72vh; }
         #drawing-canvas { position: absolute; top: 0; left: 0; pointer-events: none; }
 
         button { padding: 10px 15px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; }
@@ -36,16 +36,12 @@
         .btn-clear { background: #ff4444; color: #fff; }
         .btn-save { background: #00d4ff; color: #000; }
         
-        /* Switch Custom */
-        .switch { position: relative; display: inline-block; width: 34px; height: 20px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; border: 1px solid #555; }
-        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #ff4400; }
-        input:checked + .slider:before { transform: translateX(14px); }
-
-        /* Checkbox do Slot */
-        .slot-visible { width: 18px; height: 18px; accent-color: #00FF00; cursor: pointer; }
+        #legend {
+            position: absolute; bottom: 15px; right: 15px; background: rgba(0,0,0,0.85);
+            padding: 10px; border-radius: 8px; border: 1px solid #00FF00; display: flex; flex-direction: column; gap: 3px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 9px; font-weight: bold; color: #fff; }
+        .color-box { width: 12px; height: 12px; border: 0.5px solid white; }
 
         input[type=range] { cursor: pointer; accent-color: #00FF00; }
         input[type=text], select { background: #111; color: #fff; border: 1px solid #444; padding: 5px; border-radius: 4px; font-size: 12px; }
@@ -55,8 +51,8 @@
 <body>
 
     <div id="splash-screen">
-        <div class="splash-logo">COACH LIPEE<br><span style="font-size: 1rem; color: #fff; letter-spacing: 3px;">SLOT CONTROL & HEATMAP V10</span></div>
-        <button class="btn-play" style="padding: 15px 40px; font-size: 1.2rem;" onclick="startApp()">INICIAR ANÁLISE</button>
+        <div class="splash-logo">COACH LIPEE<br><span style="font-size: 1rem; color: #fff; letter-spacing: 3px;">EXPOSURE CONTROL V12</span></div>
+        <button class="btn-play" style="padding: 15px 40px; font-size: 1.2rem;" onclick="startApp()">INICIAR SISTEMA</button>
     </div>
 
     <div id="main-app">
@@ -64,21 +60,23 @@
             <input type="file" id="map-upload" accept="image/*">
             
             <div class="config-group">
+                <label>🖼️ CLAREAR MAPA:</label>
+                <input type="range" id="map-brightness" min="10" max="150" value="70">
+            </div>
+
+            <div class="config-group">
                 <label>SLOT:</label>
                 <select id="team-select"></select>
-                <input type="checkbox" id="slot-visible-toggle" class="slot-visible" checked title="Ativar/Desativar Slot">
+                <input type="checkbox" id="slot-visible-toggle" checked title="Ver Rota">
             </div>
             
             <div class="config-group">
                 <label>🌡️ HEATMAP:</label>
-                <label class="switch">
-                    <input type="checkbox" id="heatmap-toggle" checked>
-                    <span class="slider"></span>
-                </label>
+                <input type="checkbox" id="heatmap-toggle" checked>
             </div>
 
             <div class="config-group">
-                <label>⚡ BRILHO:</label>
+                <label>⚡ BRILHO NEON:</label>
                 <input type="color" id="neon-color" value="#00FF00">
                 <input type="range" id="neon-brilho" min="10" max="400" value="150">
             </div>
@@ -88,15 +86,16 @@
                 <input type="range" id="logo-size" min="10" max="150" value="50">
             </div>
 
-            <button class="btn-undo" id="undo-btn">↩️ DESFAZER</button>
-            <button class="btn-play" id="play-btn">▶️ ANIMAR</button>
+            <button class="btn-undo" id="undo-btn">↩️</button>
+            <button class="btn-play" id="play-btn">▶️</button>
             <button class="btn-save" id="save-btn">📸 SALVAR</button>
-            <button class="btn-clear" id="clear-btn">🗑️ RESET</button>
+            <button class="btn-clear" id="clear-btn">🗑️</button>
         </div>
 
         <div id="map-container">
             <img id="game-map" src="">
             <canvas id="drawing-canvas"></canvas>
+            <div id="legend"></div>
         </div>
     </div>
 
@@ -105,9 +104,16 @@
         const ctx = canvas.getContext('2d');
         const gameMap = document.getElementById('game-map');
         const teamSelect = document.getElementById('team-select');
+        const mapBrightness = document.getElementById('map-brightness');
         const heatmapToggle = document.getElementById('heatmap-toggle');
         const slotVisibleToggle = document.getElementById('slot-visible-toggle');
-        
+
+        const decisColors = {
+            1: "#006837", 2: "#1a9850", 3: "#a6d96a", 
+            4: "#d9ef8b", 5: "#fee08b", 6: "#fdae61", 
+            7: "#f46d43", 8: "#d73027", 9: "#a50026"
+        };
+
         let teamData = {}; 
         let teamHistory = {}; 
         let activeTeam = 1;
@@ -117,7 +123,23 @@
         function startApp() {
             document.getElementById('splash-screen').style.display = 'none';
             document.getElementById('main-app').style.display = 'flex';
+            createLegend();
             init();
+        }
+
+        function createLegend() {
+            const legend = document.getElementById('legend');
+            for(let i=9; i>=1; i--) {
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.innerHTML = `<div class="color-box" style="background:${decisColors[i]}"></div> <span>D${i}</span>`;
+                legend.appendChild(item);
+            }
+        }
+
+        function updateMapFilter() {
+            const val = mapBrightness.value / 100;
+            gameMap.style.filter = `brightness(${val}) contrast(1.1)`;
         }
 
         function init() {
@@ -128,6 +150,9 @@
                 opt.value = i; opt.text = 'Time ' + i;
                 teamSelect.add(opt);
             }
+
+            mapBrightness.oninput = updateMapFilter;
+            updateMapFilter();
 
             document.getElementById('map-upload').onchange = (e) => {
                 const reader = new FileReader();
@@ -142,7 +167,7 @@
                 const sy = gameMap.naturalHeight / rect.height;
                 const x = (e.clientX - rect.left) * sx;
                 const y = (e.clientY - rect.top) * sy;
-                teamHistory[activeTeam].push({ x, y, time: new Date().toLocaleTimeString('pt-BR', {minute:'2-digit', second:'2-digit'}) });
+                teamHistory[activeTeam].push({ x, y });
                 redraw();
             };
 
@@ -151,18 +176,10 @@
             document.getElementById('clear-btn').onclick = () => location.reload();
             document.getElementById('save-btn').onclick = saveImage;
             
-            heatmapToggle.onchange = () => redraw();
+            heatmapToggle.onchange = redraw;
+            slotVisibleToggle.onchange = (e) => { teamData[activeTeam].visible = e.target.checked; redraw(); };
+            teamSelect.onchange = (e) => { activeTeam = e.target.value; updateUI(); };
             
-            slotVisibleToggle.onchange = (e) => {
-                teamData[activeTeam].visible = e.target.checked;
-                redraw();
-            };
-
-            teamSelect.onchange = (e) => { 
-                activeTeam = e.target.value; 
-                updateUI(); 
-            };
-
             document.getElementById('logo-size').oninput = (e) => { teamData[activeTeam].size = e.target.value; redraw(); };
             document.getElementById('neon-color').oninput = (e) => { teamData[activeTeam].neonColor = e.target.value; redraw(); };
             document.getElementById('neon-brilho').oninput = (e) => { teamData[activeTeam].brilho = e.target.value; redraw(); };
@@ -176,25 +193,23 @@
             slotVisibleToggle.checked = t.visible;
         }
 
-        function drawHeatmap(sx, sy) {
+        function drawDecisHeatmap(sx, sy) {
             if (!heatmapToggle.checked) return;
             ctx.save();
-            ctx.globalCompositeOperation = 'screen';
+            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = "white";
+            ctx.globalAlpha = 0.8;
+
             for(let id in teamHistory) {
-                // O Heatmap continua aparecendo mesmo que o slot esteja invisível (Análise de calor total)
-                teamHistory[id].forEach(p => {
-                    const radius = 110 * sx;
-                    const grad = ctx.createRadialGradient(p.x*sx, p.y*sy, 0, p.x*sx, p.y*sy, radius);
-                    grad.addColorStop(0, 'rgba(255, 255, 255, 0.7)'); 
-                    grad.addColorStop(0.15, 'rgba(255, 0, 0, 0.5)');  
-                    grad.addColorStop(0.3, 'rgba(255, 165, 0, 0.3)'); 
-                    grad.addColorStop(0.5, 'rgba(255, 255, 0, 0.15)'); 
-                    grad.addColorStop(0.8, 'rgba(0, 255, 100, 0.05)'); 
-                    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');         
-                    ctx.fillStyle = grad;
+                const history = teamHistory[id];
+                history.forEach((p, index) => {
+                    let decisLevel = Math.min(9, Math.ceil((index + 1) / (Math.max(1, history.length / 9))));
+                    const radius = 100 * sx;
+                    ctx.fillStyle = decisColors[decisLevel];
                     ctx.beginPath();
                     ctx.arc(p.x*sx, p.y*sy, radius, 0, Math.PI*2);
                     ctx.fill();
+                    ctx.stroke();
                 });
             }
             ctx.restore();
@@ -208,16 +223,11 @@
             const sy = canvas.height / gameMap.naturalHeight;
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
-
-            drawHeatmap(sx, sy);
+            drawDecisHeatmap(sx, sy);
 
             for(let id in teamHistory) {
                 const config = teamData[id];
-                // Pula o desenho se o slot estiver desmarcado
                 if(!config.visible) continue;
-
                 const history = teamHistory[id];
                 if(history.length < 1) continue;
 
@@ -226,37 +236,32 @@
                 ctx.shadowBlur = config.brilho;
                 ctx.shadowColor = config.neonColor;
                 ctx.strokeStyle = config.neonColor;
-                ctx.lineWidth = 7;
+                ctx.lineWidth = 6;
                 ctx.lineCap = "round";
                 ctx.lineJoin = "round";
                 history.forEach((p, i) => { (i === 0) ? ctx.moveTo(p.x*sx, p.y*sy) : ctx.lineTo(p.x*sx, p.y*sy); });
                 ctx.stroke();
-                
-                ctx.shadowBlur = config.brilho / 5;
+                ctx.shadowBlur = 0;
                 ctx.strokeStyle = "#fff";
-                ctx.lineWidth = 2.5;
+                ctx.lineWidth = 2;
                 ctx.stroke();
                 ctx.restore();
 
-                if(elapsed !== null) {
-                    animateRoute(history, config, elapsed, sx, sy);
-                } else {
-                    history.forEach(p => drawLogoAt(p.x*sx, p.y*sy, config));
-                }
+                history.forEach(p => drawLogoAt(p.x*sx, p.y*sy, config));
             }
         }
 
         function drawLogoAt(x, y, t) {
             ctx.save();
-            ctx.shadowBlur = t.brilho / 2;
+            ctx.shadowBlur = t.brilho / 3;
             ctx.shadowColor = t.neonColor;
             ctx.fillStyle = "#fff";
             ctx.beginPath(); ctx.arc(x, y, t.size/2, 0, Math.PI*2); ctx.fill();
-            ctx.lineWidth = 3;
+            ctx.lineWidth = 2;
             ctx.strokeStyle = t.neonColor;
             ctx.stroke();
             ctx.fillStyle = "#000";
-            ctx.font = `bold ${t.size/2.2}px Arial`;
+            ctx.font = `bold ${t.size/2.5}px Arial`;
             ctx.textAlign = "center";
             ctx.fillText(t.tag, x, y + (t.size/8));
             ctx.restore();
@@ -267,9 +272,9 @@
             if(isAnimating) {
                 animStart = performance.now();
                 requestAnimationFrame(run);
-                document.getElementById('play-btn').innerText = "⏹️ PARAR";
+                document.getElementById('play-btn').innerText = "⏹️";
             } else {
-                document.getElementById('play-btn').innerText = "▶️ ANIMAR";
+                document.getElementById('play-btn').innerText = "▶️";
                 redraw();
             }
         }
@@ -285,12 +290,12 @@
             const fctx = final.getContext('2d');
             final.width = gameMap.naturalWidth;
             final.height = gameMap.naturalHeight;
-            fctx.filter = 'brightness(0.2) contrast(1.3)';
+            fctx.filter = gameMap.style.filter;
             fctx.drawImage(gameMap, 0, 0);
             fctx.filter = 'none';
             fctx.drawImage(canvas, 0, 0, final.width, final.height);
             const link = document.createElement('a');
-            link.download = 'ANALISE_LIPEE_PRO_V10.png';
+            link.download = 'ANALISE_LIPEE_CUSTOM.png';
             link.href = final.toDataURL();
             link.click();
         }
