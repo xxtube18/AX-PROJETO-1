@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>COACH LIPEE - TACTICAL V46 PRO</title>
+    <title>COACH LIPEE - TACTICAL V47 FINAL</title>
     <style>
         :root { --neon: #00FF00; --bg: #0a0a0b; --card: #151517; --border: #2a2a2e; }
         body { background: var(--bg); margin: 0; font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; }
@@ -14,19 +14,19 @@
         .btn:hover { background: #303035; color: #fff; }
         .btn.active { background: var(--neon) !important; color: #000 !important; }
         #viewport { position: relative; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        #map-container { position: relative; cursor: crosshair; }
+        #map-container { position: relative; }
         #game-map { max-width: 90vw; max-height: 85vh; display: block; filter: brightness(0.7); border-radius: 4px; }
         .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         #interaction-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; pointer-events: all; }
         input[type=range] { width: 100%; accent-color: var(--neon); margin: 5px 0; cursor: pointer; }
         select, input[type=text] { width: 100%; background: #0a0a0b; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 4px; font-size: 11px; margin-bottom: 5px; }
         
-        /* Modal de Aviso */
-        #call-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card); border: 2px solid var(--neon); padding: 20px; z-index: 1000; display: none; border-radius: 12px; width: 300px; text-align: center; box-shadow: 0 0 30px rgba(0,255,0,0.2); }
-        #call-modal img { max-width: 100%; margin-top: 10px; border-radius: 4px; border: 1px solid #444; }
-        #call-modal button { margin-top: 15px; width: 100%; padding: 8px; background: var(--neon); border: none; font-weight: bold; cursor: pointer; }
+        /* Modal do Ponto Verde */
+        #call-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card); border: 2px solid var(--neon); padding: 20px; z-index: 1000; display: none; border-radius: 12px; width: 320px; text-align: center; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
+        #call-modal img { max-width: 100%; max-height: 200px; margin-top: 10px; border-radius: 4px; }
         
-        .timeline-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 60%; background: rgba(0,0,0,0.9); padding: 15px; border-radius: 40px; display: none; border: 1px solid var(--neon); z-index: 100; }
+        #timeline-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 60%; background: rgba(0,0,0,0.9); padding: 15px; border-radius: 40px; display: none; border: 1px solid var(--neon); z-index: 100; }
+        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
     </style>
 </head>
 <body>
@@ -36,65 +36,74 @@
         <h2 style="color:var(--neon); margin:0; text-align: center; font-weight: 900;">COACH LIPEE</h2>
         
         <div class="tool-card">
-            <h4>🗺️ MAPAS</h4>
+            <h4>🗺️ MAPAS SELECIONADOS</h4>
             <select id="map-select">
-                <option value="">-- Selecionar --</option>
+                <option value="">-- Escolher Mapa --</option>
                 <option value="https://i.imgur.com/8QOInU9.jpeg">Bermuda</option>
                 <option value="https://i.imgur.com/R3t6f4D.jpeg">Purgatório</option>
                 <option value="https://i.imgur.com/vH9Z3tM.jpeg">Alpine</option>
-                <option value="LINK">Nova Terra</option>
-                <option value="LINK">Kalahari</option>
-                <option value="LINK">Solara</option>
+                <option value="">Nova Terra</option>
+                <option value="">Kalahari</option>
+                <option value="">Solara</option>
             </select>
         </div>
 
         <div class="tool-card">
             <h4>🛠️ FERRAMENTAS</h4>
-            <div class="grid-buttons" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                <button class="btn btn-mode active" id="mode-route">ROTA + TIME</button>
-                <button class="btn btn-mode" id="mode-safe">SAFE</button>
-                <button class="btn btn-mode" id="mode-call" style="color: #00FF00;">🟢 PONTO AVISO</button>
+            <div class="grid-buttons">
+                <button class="btn btn-mode active" id="mode-route">ROTA + MINUTOS</button>
+                <button class="btn btn-mode" id="mode-safe">SAFE (CÍRCULOS)</button>
+                <button class="btn btn-mode" id="mode-call" style="color: #00FF00;">🟢 PONTO VERDE</button>
                 <button class="btn btn-mode" id="mode-text">💬 TEXTO CALL</button>
             </div>
-            <label style="font-size:9px; margin-top:8px; display:block">TAMANHO DA SAFE / LOGO</label>
-            <input type="range" id="global-size" min="5" max="50" value="20">
+            <label style="font-size:9px; margin-top:10px; display:block">TAMANHO DA SAFE SELECIONADA</label>
+            <input type="range" id="safe-size" min="0.01" max="0.6" step="0.01" value="0.15">
         </div>
 
         <div class="tool-card">
-            <h4>🔥 MAPA DE CALOR</h4>
+            <h4>🔥 MAPA DE CALOR (ORIGINAL)</h4>
+            <label style="font-size:9px">DENSIDADE / RAIO</label>
             <input type="range" id="heat-opacity" min="0" max="10" value="0">
             <input type="range" id="heat-radius" min="10" max="100" value="40">
         </div>
 
         <div class="tool-card">
-            <h4>🎮 TIMES</h4>
+            <h4>🎮 TIME ATIVO</h4>
             <select id="team-slot"></select>
             <input type="text" id="team-name" placeholder="Nome do Time">
-            <button class="btn" style="width:100%; background:#34495e; color:white" onclick="document.getElementById('up-logo').click()">🖼️ SUBIR LOGO</button>
+            <button class="btn" style="width:100%; background:#34495e; color:white" onclick="document.getElementById('up-logo').click()">🖼️ IMPORTAR LOGO</button>
             <input type="file" id="up-logo" style="display:none" accept="image/*">
+            <label style="font-size:9px; margin-top:8px; display:block">TAMANHO DA LOGO</label>
+            <input type="range" id="logo-size" min="10" max="50" value="20">
         </div>
 
         <div class="tool-card" style="margin-top: auto;">
-            <button class="btn" id="start-replay" style="width:100%; background:var(--neon); color:#000; font-weight:800; margin-bottom:5px;">▶️ PLAY TÁTICO</button>
-            <button class="btn" id="undo-btn" style="width:100%; background:#e67e22; color:white">↩️ DESFAZER</button>
+            <button class="btn" id="start-replay" style="width:100%; background:var(--neon); color:#000; font-weight:800; margin-bottom:5px;">▶️ ASSISTIR REPLAY</button>
+            <div class="grid-buttons">
+                <button class="btn" id="undo-btn" style="background:#e67e22; color:white">↩️ VOLTAR</button>
+                <button class="btn" id="btn-save" style="background:#2ecc71; color:white">💾 SALVAR</button>
+            </div>
         </div>
     </div>
 
     <div id="viewport">
         <div id="map-container">
             <img id="game-map" src="">
-            <canvas id="heat-layer" class="layer" style="mix-blend-mode: color-dodge;"></canvas>
+            <canvas id="heat-layer" class="layer" style="mix-blend-mode: screen;"></canvas>
             <canvas id="vector-layer" class="layer"></canvas>
             <div id="interaction-layer"></div>
+        </div>
+        <div id="timeline-bar">
+            <input type="range" id="timeline" min="0" max="100" value="0" step="0.1">
         </div>
     </div>
 </div>
 
 <div id="call-modal">
-    <h3 id="modal-title" style="margin:0; color:var(--neon); font-size:14px;">CALL DE ELITE</h3>
-    <p id="modal-desc" style="font-size:12px; margin: 10px 0;"></p>
+    <h3 id="modal-title" style="color:var(--neon); margin:0;">AVISO DE CALL</h3>
+    <p id="modal-desc" style="margin:10px 0; font-size:14px;"></p>
     <div id="modal-img-container"></div>
-    <button onclick="document.getElementById('call-modal').style.display='none'">FECHAR</button>
+    <button class="btn" onclick="document.getElementById('call-modal').style.display='none'" style="width:100%; background:var(--neon); color:#000; margin-top:10px;">FECHAR</button>
 </div>
 
 <script>
@@ -107,7 +116,7 @@
 
     for(let i=1; i<=12; i++) {
         state.history[i] = [];
-        state.teams[i] = { name: `Time ${i}`, color: ['#FF0000','#00FF00','#0080FF','#FFFF00','#FF00FF','#00FFFF','#FFA500','#CC00FF','#00FF7F','#FFD700','#FF69B4','#40E0D0'][i-1] };
+        state.teams[i] = { name: `Slot ${i}`, color: ['#FF0000','#00FF00','#0080FF','#FFFF00','#FF00FF','#00FFFF','#FFA500','#CC00FF','#00FF7F','#FFD700','#FF69B4','#40E0D0'][i-1] };
         document.getElementById('team-slot').add(new Option(state.teams[i].name, i));
     }
 
@@ -135,49 +144,52 @@
         const ny = (e.clientY - r.top) / r.height;
 
         if(state.mode === 'call' || state.mode === 'text') {
-            const txt = prompt("Escreva a call deste ponto:");
-            let imgData = null;
-            if(state.mode === 'call' && txt) {
-                const confirmImg = confirm("Deseja anexar uma imagem a este ponto verde?");
-                if(confirmImg) {
-                    const input = document.createElement('input');
-                    input.type = 'file'; input.accept = 'image/*';
-                    input.onchange = (ev) => {
-                        const reader = new FileReader();
-                        reader.onload = (f) => {
-                            state.annotations.push({x:nx, y:ny, text:txt, img:f.target.result, type:'green'});
-                            render();
-                        };
-                        reader.readAsDataURL(ev.target.files[0]);
+            const txt = prompt("Texto da Call:");
+            if(!txt) return;
+            if(state.mode === 'call') {
+                const input = document.createElement('input');
+                input.type = 'file'; input.accept = 'image/*';
+                input.onchange = (ev) => {
+                    const reader = new FileReader();
+                    reader.onload = (f) => {
+                        state.annotations.push({x:nx, y:ny, text:txt, img:f.target.result, type:'green'});
+                        render();
                     };
-                    input.click();
-                    return;
-                }
+                    reader.readAsDataURL(ev.target.files[0]);
+                };
+                input.click();
+            } else {
+                state.annotations.push({x:nx, y:ny, text:txt, type:'chat'});
             }
-            if(txt) state.annotations.push({x:nx, y:ny, text:txt, type: state.mode === 'call' ? 'green' : 'chat'});
         } else if(state.mode === 'safe') {
-            state.safeHistory.push({x:nx, y:ny, r: parseInt(document.getElementById('global-size').value)/200});
+            state.safeHistory.push({x:nx, y:ny, r: parseFloat(document.getElementById('safe-size').value)});
         } else {
-            const time = prompt("Minuto da chegada (ex: 4.5):", "0.0");
-            state.history[document.getElementById('team-slot').value].push({x:nx, y:ny, t: parseFloat(time)});
+            const time = prompt("Minuto da Rota (ex: 3.2):", "0.0");
+            state.history[document.getElementById('team-slot').value].push({x:nx, y:ny, t: parseFloat(time) || 0});
         }
         render();
     };
 
-    // Detecção de clique nos ícones interativos
+    document.getElementById('interaction-layer').onmousemove = (e) => {
+        const r = e.target.getBoundingClientRect();
+        const nx = (e.clientX - r.left) / r.width;
+        const ny = (e.clientY - r.top) / r.height;
+        let found = false;
+        state.annotations.forEach(ann => {
+            if(Math.hypot(ann.x - nx, ann.y - ny) < 0.02) found = true;
+        });
+        e.target.style.cursor = found ? 'pointer' : 'crosshair';
+    };
+
     document.getElementById('interaction-layer').onmousedown = (e) => {
         const r = e.target.getBoundingClientRect();
         const nx = (e.clientX - r.left) / r.width;
         const ny = (e.clientY - r.top) / r.height;
-
         state.annotations.forEach(ann => {
-            const dist = Math.hypot(ann.x - nx, ann.y - ny);
-            if(dist < 0.03) {
-                const modal = document.getElementById('call-modal');
+            if(Math.hypot(ann.x - nx, ann.y - ny) < 0.02) {
                 document.getElementById('modal-desc').innerText = ann.text;
-                const container = document.getElementById('modal-img-container');
-                container.innerHTML = ann.img ? `<img src="${ann.img}">` : '';
-                modal.style.display = 'block';
+                document.getElementById('modal-img-container').innerHTML = ann.img ? `<img src="${ann.img}">` : '';
+                document.getElementById('call-modal').style.display = 'block';
             }
         });
     };
@@ -191,7 +203,7 @@
         Object.values(state.history).forEach(pts => {
             pts.forEach(p => {
                 let g = ctxH.createRadialGradient(p.x*canvasH.width, p.y*canvasH.height, 0, p.x*canvasH.width, p.y*canvasH.height, radius);
-                g.addColorStop(0, 'yellow'); g.addColorStop(0.5, 'orange'); g.addColorStop(1, 'transparent');
+                g.addColorStop(0, 'rgba(255,255,0,1)'); g.addColorStop(0.5, 'rgba(255,50,0,0.6)'); g.addColorStop(1, 'transparent');
                 ctxH.fillStyle = g; ctxH.beginPath(); ctxH.arc(p.x*canvasH.width, p.y*canvasH.height, radius, 0, Math.PI*2); ctxH.fill();
             });
         });
@@ -201,47 +213,76 @@
         ctxV.clearRect(0,0,canvasV.width, canvasV.height);
         const w = canvasV.width, h = canvasV.height;
 
-        // Safes
+        // Safes Evolutivas
         state.safeHistory.forEach((s, i) => {
-            ctxV.beginPath(); ctxV.strokeStyle = "white"; ctxV.setLineDash([5,5]);
+            ctxV.beginPath(); ctxV.strokeStyle = "white"; ctxV.lineWidth = 2; ctxV.setLineDash([5,5]);
             ctxV.arc(s.x*w, s.y*h, s.r*w, 0, Math.PI*2); ctxV.stroke();
+            ctxV.fillStyle = "white"; ctxV.font = "bold 12px Arial";
+            ctxV.fillText(`S${i+1}`, s.x*w - 10, s.y*h - s.r*w - 5);
         });
         ctxV.setLineDash([]);
 
-        // Anotações (Ponto Verde e Chat)
+        // Anotações
         state.annotations.forEach(ann => {
             ctxV.beginPath();
             if(ann.type === 'green') {
-                ctxV.fillStyle = "#00FF00"; ctxV.shadowBlur = 15; ctxV.shadowColor = "#00FF00";
-                ctxV.arc(ann.x*w, ann.y*h, 8, 0, Math.PI*2); ctxV.fill();
+                ctxV.fillStyle = "#00FF00"; ctxV.shadowBlur = 10; ctxV.shadowColor = "#00FF00";
+                ctxV.arc(ann.x*w, ann.y*h, 10, 0, Math.PI*2); ctxV.fill();
             } else {
-                ctxV.fillStyle = "#0080FF"; ctxV.arc(ann.x*w, ann.y*h, 6, 0, Math.PI*2); ctxV.fill();
-                ctxV.fillStyle = "white"; ctxV.font = "10px Arial"; ctxV.fillText("💬", ann.x*w-6, ann.y*h+4);
+                ctxV.fillStyle = "#0080FF"; ctxV.arc(ann.x*w, ann.y*h, 8, 0, Math.PI*2); ctxV.fill();
+                ctxV.fillStyle = "white"; ctxV.font = "12px Arial"; ctxV.fillText("💬", ann.x*w-7, ann.y*h+5);
             }
             ctxV.shadowBlur = 0;
         });
 
-        // Rotas com minutagem
-        const lSize = parseInt(document.getElementById('global-size').value);
+        // Rotas e Minutagem (T2-T1)
+        const lSize = parseInt(document.getElementById('logo-size').value);
         Object.keys(state.history).forEach(id => {
-            const pts = state.history[id];
-            if(pts.length < 1) return;
-            ctxV.beginPath(); ctxV.strokeStyle = state.teams[id].color; ctxV.lineWidth = 3;
-            pts.forEach((p, i) => i === 0 ? ctxV.moveTo(p.x*w, p.y*h) : ctxV.lineTo(p.x*w, p.y*h));
+            const pts = state.history[id]; if(pts.length < 1) return;
+            const color = state.teams[id].color;
+            ctxV.beginPath(); ctxV.strokeStyle = color; ctxV.lineWidth = 3;
+            pts.forEach((p, i) => {
+                i === 0 ? ctxV.moveTo(p.x*w, p.y*h) : ctxV.lineTo(p.x*w, p.y*h);
+                ctxV.fillStyle = "white"; ctxV.font = "bold 10px Arial";
+                ctxV.fillText(`${p.t}'`, p.x*w + 10, p.y*h - 10);
+            });
             ctxV.stroke();
 
-            const p = pts[pts.length-1];
-            ctxV.fillStyle = "white"; ctxV.beginPath(); ctxV.arc(p.x*w, p.y*h, lSize, 0, Math.PI*2); ctxV.fill();
+            const p = state.animating ? getAnimPos(id) : pts[pts.length-1];
+            ctxV.fillStyle = "#fff"; ctxV.beginPath(); ctxV.arc(p.x*w, p.y*h, lSize, 0, Math.PI*2); ctxV.fill();
             if(logos[id]) ctxV.drawImage(logos[id], p.x*w - lSize, p.y*h - lSize, lSize*2, lSize*2);
-            ctxV.fillStyle = "white"; ctxV.font = "bold 10px Arial";
-            ctxV.fillText(`${p.t} min`, p.x*w - 15, p.y*h - lSize - 5);
+            else { ctxV.fillStyle = "#000"; ctxV.font = "bold 10px Arial"; ctxV.textAlign="center"; ctxV.fillText(state.teams[id].name.substring(0,3), p.x*w, p.y*h+4); }
         });
     }
 
+    function getAnimPos(id) {
+        const h = state.history[id]; if(h.length < 2) return h[h.length-1] || {x:0.5, y:0.5};
+        const totalTime = h[h.length-1].t - h[0].t || 1;
+        const currentT = h[0].t + (state.animTime / 100) * totalTime;
+        for(let i=0; i<h.length-1; i++) {
+            if(currentT >= h[i].t && currentT <= h[i+1].t) {
+                const pct = (currentT - h[i].t) / (h[i+1].t - h[i].t);
+                return { x: h[i].x + (h[i+1].x - h[i].x) * pct, y: h[i].y + (h[i+1].y - h[i].y) * pct };
+            }
+        }
+        return h[h.length-1];
+    }
+
+    document.getElementById('start-replay').onclick = () => {
+        state.animating = true; state.animTime = 0;
+        document.getElementById('timeline-bar').style.display = 'block';
+        const loop = () => {
+            if(state.animTime < 100 && state.animating) {
+                state.animTime += 0.2; document.getElementById('timeline').value = state.animTime;
+                render(); requestAnimationFrame(loop);
+            } else { state.animating = false; }
+        }; loop();
+    };
+
     document.getElementById('undo-btn').onclick = () => {
-        state.annotations.pop();
-        state.safeHistory.pop();
-        state.history[document.getElementById('team-slot').value].pop();
+        if(state.mode === 'safe') state.safeHistory.pop();
+        else if(state.mode === 'call' || state.mode === 'text') state.annotations.pop();
+        else state.history[document.getElementById('team-slot').value].pop();
         render();
     };
 
@@ -252,6 +293,13 @@
             img.onload = () => { logos[document.getElementById('team-slot').value] = img; render(); };
         };
         reader.readAsDataURL(e.target.files[0]);
+    };
+
+    document.getElementById('btn-save').onclick = () => {
+        const data = JSON.stringify(state);
+        const blob = new Blob([data], {type: "application/json"});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = "projeto-coach.json"; a.click();
     };
 
     function render() { drawHeat(); drawVectors(); }
