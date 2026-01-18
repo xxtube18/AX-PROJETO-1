@@ -2,281 +2,265 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>COACH LIPEE - TACTICAL V38</title>
+    <title>COACH LIPEE - TACTICAL V40</title>
     <style>
-        :root { 
-            --neon: #00FF00; 
-            --gas: rgba(0, 100, 255, 0.4);
-            --bg: #0a0a0b;
-            --card: #151517;
-            --border: #2a2a2e;
-        }
+        :root { --neon: #00FF00; --gas: rgba(0, 100, 255, 0.4); --bg: #0a0a0b; --card: #151517; --border: #2a2a2e; }
+        body { background: var(--bg); margin: 0; font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; }
+        #main-app { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
         
-        body { background: var(--bg); margin: 0; font-family: 'Inter', 'Segoe UI', sans-serif; color: white; overflow: hidden; }
-        
-        /* Layout Principal */
-        #main-app { display: grid; grid-template-columns: 280px 1fr; height: 100vh; }
-        
-        /* Barra Lateral de Ferramentas */
-        #sidebar { 
-            background: var(--card); border-right: 1px solid var(--border); 
-            padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto;
-        }
+        #sidebar { background: var(--card); border-right: 1px solid var(--border); padding: 15px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        .tool-card { background: #1c1c1f; border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+        .tool-card h4 { margin: 0 0 8px 0; font-size: 10px; color: var(--neon); text-transform: uppercase; letter-spacing: 1px; }
 
-        .tool-card { background: #1c1c1f; border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
-        .tool-card h4 { margin: 0 0 10px 0; font-size: 11px; color: var(--neon); text-transform: uppercase; letter-spacing: 1px; }
-
-        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .btn { background: #252529; border: 1px solid #3a3a3e; color: #a0a0a5; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 600; transition: 0.2s; text-align: center; border: none; }
+        .btn:hover { background: #303035; color: #fff; }
+        .btn.active { background: var(--neon); color: #000; }
         
-        /* Botões Estilizados */
-        .btn { 
-            background: #252529; border: 1px solid #3a3a3e; color: #a0a0a5; 
-            padding: 10px; border-radius: 6px; cursor: pointer; font-size: 11px; 
-            font-weight: 600; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
-        .btn:hover { background: #303035; color: #fff; border-color: var(--neon); }
-        .btn.active { background: var(--neon); color: #000; border-color: var(--neon); }
-        .btn-action { background: #00FF0015; color: var(--neon); border-color: #00FF0030; }
-
-        /* Área do Mapa */
         #viewport { position: relative; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        #map-container { position: relative; transition: filter 0.5s ease; }
-        #game-map { max-width: 90vw; max-height: 85vh; display: block; filter: brightness(0.8); border-radius: 4px; }
-        
-        /* Filtro Visão Noturna */
-        .night-mode { filter: brightness(0.6) contrast(1.2) hue-rotate(180px) saturate(1.5) !important; }
-
+        #map-container { position: relative; }
+        #game-map { max-width: 90vw; max-height: 80vh; display: block; filter: brightness(0.7); }
         .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         #interaction-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; z-index: 50; pointer-events: all; }
-
-        /* Sliders Custom */
-        input[type=range] { width: 100%; accent-color: var(--neon); margin: 10px 0; }
-        select, input[type=text] { width: 100%; background: #0a0a0b; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 4px; margin-bottom: 5px; font-size: 12px; }
-
-        #timeline-bar { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 60%; z-index: 100; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 50px; display: none; border: 1px solid var(--border); }
+        
+        input[type=range] { width: 100%; accent-color: var(--neon); margin: 5px 0; cursor: pointer; }
+        select, input[type=text] { width: 100%; background: #0a0a0b; border: 1px solid var(--border); color: #fff; padding: 6px; border-radius: 4px; font-size: 11px; margin-bottom: 5px; }
+        
+        #timeline-bar { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 60%; background: rgba(0,0,0,0.95); padding: 15px; border-radius: 40px; display: none; border: 1px solid var(--neon); z-index: 100; box-shadow: 0 0 20px rgba(0,255,0,0.2); }
     </style>
 </head>
 <body>
 
-    <div id="main-app">
-        <div id="sidebar">
-            <h2 style="color:var(--neon); margin:0 0 20px 0; font-size:18px;">V38 TACTICAL</h2>
-            
-            <div class="tool-card">
-                <h4>🗺️ Ambiente</h4>
-                <select id="map-select">
-                    <option value="">Selecione o Mapa...</option>
-                    <option value="https://i.imgur.com/8QOInU9.jpeg">Bermuda</option>
-                    <option value="https://i.imgur.com/R3t6f4D.jpeg">Purgatório</option>
-                    <option value="https://i.imgur.com/vH9Z3tM.jpeg">Alpine</option>
-                </select>
-                <button class="btn" id="toggle-night">🌑 VISÃO NOTURNA: OFF</button>
-            </div>
+<div id="main-app">
+    <div id="sidebar">
+        <h3 style="color:var(--neon); margin:0; font-style: italic; letter-spacing: -1px;">V40 AUTO-GAS SYSTEM</h3>
 
-            <div class="tool-card">
-                <h4>🎮 Gestão de Times</h4>
-                <select id="team-slot"></select>
-                <input type="text" id="team-name" placeholder="Nome do Time">
-                <label style="font-size:9px">TAMANHO ÍCONE</label>
-                <input type="range" id="logo-size" min="10" max="40" value="18">
-            </div>
+        <div class="tool-card">
+            <h4>🗺️ SELETOR DE MAPA</h4>
+            <select id="map-select">
+                <option value="">-- Escolher Mapa --</option>
+                <option value="https://i.imgur.com/8QOInU9.jpeg">Bermuda</option>
+                <option value="https://i.imgur.com/R3t6f4D.jpeg">Purgatório</option>
+                <option value="https://i.imgur.com/vH9Z3tM.jpeg">Alpine</option>
+                <option value="LINK_AQUI">Kalahari</option>
+                <option value="LINK_AQUI">Nova Terra</option>
+            </select>
+        </div>
 
-            <div class="tool-card">
-                <h4>🛠️ Ferramentas</h4>
-                <div class="grid-buttons">
-                    <button class="btn btn-mode active" id="mode-route">ROTA</button>
-                    <button class="btn btn-mode" id="mode-safe">SAFE</button>
-                    <button class="btn btn-mode" id="mode-text">TEXTO</button>
-                    <button class="btn" id="undo-btn">↩️ VOLTAR</button>
-                </div>
-            </div>
+        <div class="tool-card">
+            <h4>🎮 TIME SELECIONADO</h4>
+            <select id="team-slot"></select>
+            <input type="text" id="team-name" placeholder="Apelido do Time">
+            <label style="font-size:9px">TAMANHO DOS ÍCONES</label>
+            <input type="range" id="logo-size" min="10" max="45" value="20">
+        </div>
 
-            <div class="tool-card">
-                <h4>🌊 Simulador de Gás</h4>
-                <label style="font-size:9px">FECHAMENTO DO GÁS</label>
-                <input type="range" id="gas-range" min="0" max="150" value="0">
-                <button class="btn" id="toggle-gas">MOSTRAR GÁS: ON</button>
-            </div>
-
-            <div class="tool-card" style="margin-top:auto">
-                <button class="btn btn-action" id="start-replay" style="width:100%; background:var(--neon); color:#000">▶️ INICIAR REPLAY</button>
-                <button class="btn" onclick="location.reload()" style="width:100%; margin-top:10px; font-size:9px">🗑️ LIMPAR TUDO</button>
+        <div class="tool-card">
+            <h4>🛠️ FERRAMENTAS</h4>
+            <div class="grid-buttons">
+                <button class="btn btn-mode active" id="mode-route">ROTA</button>
+                <button class="btn btn-mode" id="mode-safe">SAFE</button>
+                <button class="btn btn-mode" id="mode-text">TEXTO</button>
+                <button class="btn" id="undo-btn" style="background:#444; color:#fff">↩️ UNDO</button>
             </div>
         </div>
 
-        <div id="viewport">
-            <div id="map-container">
-                <img id="game-map" src="">
-                <canvas id="vector-layer" class="layer"></canvas>
-                <div id="interaction-layer"></div>
-            </div>
+        <div class="tool-card">
+            <h4>🌊 CONTROLE DE GÁS</h4>
+            <label style="font-size:9px">FECHAMENTO (AUTO NO PLAY)</label>
+            <input type="range" id="gas-range" min="0" max="250" value="250">
+            <button class="btn" id="toggle-night" style="width:100%; margin-top:5px;">🌑 MODO NOTURNO</button>
+        </div>
 
-            <div id="timeline-bar">
-                <input type="range" id="timeline" min="0" max="100" value="0">
-                <div style="text-align:center; font-size:10px; color:var(--neon); margin-top:5px;">ARRASTE PARA CONTROLAR O TEMPO</div>
+        <div class="tool-card">
+            <h4>🔥 HEATMAP</h4>
+            <input type="range" id="heat-opacity" min="0" max="10" value="0">
+        </div>
+
+        <div class="tool-card" style="margin-top: auto;">
+            <button class="btn" id="start-replay" style="width:100%; background:var(--neon); color:#000; font-size:12px; margin-bottom:8px;">▶️ ASSISTIR ROTAÇÃO</button>
+            <div class="grid-buttons">
+                <button class="btn" id="btn-save" style="background:#2ecc71; color:#000">💾 SALVAR</button>
+                <button class="btn" id="btn-load" style="background:#3498db; color:#fff">📂 ABRIR</button>
             </div>
+            <input type="file" id="load-file" style="display:none" accept=".json">
         </div>
     </div>
 
-    <script>
-        const state = { 
-            mode: 'route', activeSlot: 1, animating: false, 
-            history: {}, safeHistory: [], texts: [], animTime: 0,
-            showGas: true, nightMode: false
-        };
-        const logos = {};
-        const canvas = document.getElementById('vector-layer');
-        const ctx = canvas.getContext('2d');
+    <div id="viewport">
+        <div id="map-container">
+            <img id="game-map" src="">
+            <canvas id="heat-layer" class="layer" style="mix-blend-mode: screen;"></canvas>
+            <canvas id="vector-layer" class="layer"></canvas>
+            <div id="interaction-layer"></div>
+        </div>
 
-        // Setup Slots
-        const slotsSelect = document.getElementById('team-slot');
-        for(let i=1; i<=12; i++) {
-            state.history[i] = [];
-            slotsSelect.add(new Option(`Slot ${i}`, i));
-        }
+        <div id="timeline-bar">
+            <input type="range" id="timeline" min="0" max="100" value="0" step="0.1">
+            <div style="text-align:center; font-size:9px; color:var(--neon); margin-top:5px; font-weight:bold; text-transform:uppercase;">Linha do Tempo & Gás Automático</div>
+        </div>
+    </div>
+</div>
 
-        // Toggle Visão Noturna
-        document.getElementById('toggle-night').onclick = (e) => {
-            state.nightMode = !state.nightMode;
-            document.getElementById('map-container').classList.toggle('night-mode');
-            e.target.innerText = state.nightMode ? "🌑 VISÃO NOTURNA: ON" : "🌑 VISÃO NOTURNA: OFF";
-            e.target.classList.toggle('active');
-        };
+<script>
+    const state = { mode: 'route', activeSlot: 1, history: {}, safeHistory: [], texts: [], animTime: 0, animating: false };
+    const canvasV = document.getElementById('vector-layer');
+    const ctxV = canvasV.getContext('2d');
+    const canvasH = document.getElementById('heat-layer');
+    const ctxH = canvasH.getContext('2d');
+    const logos = {};
 
-        // Toggle Gás
-        document.getElementById('toggle-gas').onclick = (e) => {
-            state.showGas = !state.showGas;
-            e.target.innerText = state.showGas ? "MOSTRAR GÁS: ON" : "MOSTRAR GÁS: OFF";
+    for(let i=1; i<=12; i++) {
+        state.history[i] = [];
+        document.getElementById('team-slot').add(new Option(`Slot ${i}`, i));
+    }
+
+    document.getElementById('map-select').onchange = (e) => {
+        if(!e.target.value) return;
+        document.getElementById('game-map').src = e.target.value;
+        document.getElementById('game-map').onload = () => {
+            const r = document.getElementById('game-map').getBoundingClientRect();
+            canvasV.width = canvasH.width = r.width;
+            canvasV.height = canvasH.height = r.height;
             render();
         };
+    };
 
-        // Carregar Mapa
-        document.getElementById('map-select').onchange = (e) => {
-            if(!e.target.value) return;
-            const img = document.getElementById('game-map');
-            img.src = e.target.value;
-            img.onload = () => {
-                const rect = img.getBoundingClientRect();
-                canvas.width = rect.width; canvas.height = rect.height;
-                render();
-            };
+    document.querySelectorAll('.btn-mode').forEach(b => {
+        b.onclick = () => {
+            state.mode = b.id.replace('mode-','');
+            document.querySelectorAll('.btn-mode').forEach(x => x.classList.remove('active'));
+            b.classList.add('active');
         };
+    });
 
-        // Modos
-        document.querySelectorAll('.btn-mode').forEach(btn => {
-            btn.onclick = () => {
-                state.mode = btn.id.replace('mode-', '');
-                document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            };
+    document.getElementById('interaction-layer').onmousedown = (e) => {
+        const r = e.target.getBoundingClientRect();
+        const nx = (e.clientX - r.left) / r.width;
+        const ny = (e.clientY - r.top) / r.height;
+
+        if(state.mode === 'safe') state.safeHistory.push({x:nx, y:ny, r:0.12});
+        else if(state.mode === 'text') { const t = prompt("Call:"); if(t) state.texts.push({x:nx, y:ny, text:t}); }
+        else state.history[document.getElementById('team-slot').value].push({x:nx, y:ny});
+        render();
+    };
+
+    function drawHeat() {
+        ctxH.clearRect(0,0,canvasH.width, canvasH.height);
+        const opacity = document.getElementById('heat-opacity').value / 10;
+        if(opacity === 0) return;
+        ctxH.globalAlpha = opacity;
+        Object.values(state.history).forEach(pts => {
+            pts.forEach(p => {
+                let g = ctxH.createRadialGradient(p.x*canvasH.width, p.y*canvasH.height, 0, p.x*canvasH.width, p.y*canvasH.height, 40);
+                g.addColorStop(0, 'rgba(255, 60, 0, 1)'); g.addColorStop(1, 'rgba(255, 60, 0, 0)');
+                ctxH.fillStyle = g; ctxH.beginPath(); ctxH.arc(p.x*canvasH.width, p.y*canvasH.height, 40, 0, Math.PI*2); ctxH.fill();
+            });
+        });
+    }
+
+    function drawVectors() {
+        ctxV.clearRect(0,0,canvasV.width, canvasV.height);
+        const w = canvasV.width, h = canvasV.height;
+
+        // GÁS AUTOMÁTICO
+        if(state.safeHistory.length > 0) {
+            const s = state.safeHistory[state.safeHistory.length-1];
+            // Se estiver animando, o gás fecha baseado no tempo. Se não, usa o slider manual.
+            let gasProg;
+            if(state.animating) {
+                gasProg = (1 - (state.animTime / 100)) * 250; 
+                document.getElementById('gas-range').value = gasProg;
+            } else {
+                gasProg = document.getElementById('gas-range').value;
+            }
+
+            const gasRadius = (gasProg / 100) * w;
+            ctxV.save();
+            ctxV.beginPath(); ctxV.rect(0,0,w,h);
+            ctxV.arc(s.x*w, s.y*h, s.r*w + gasRadius, 0, Math.PI*2, true);
+            ctxV.fillStyle = "rgba(0, 100, 255, 0.4)"; ctxV.fill();
+            ctxV.restore();
+            
+            ctxV.beginPath(); ctxV.setLineDash([5,5]); ctxV.strokeStyle = "#fff"; ctxV.lineWidth = 2;
+            state.safeHistory.forEach(sh => { ctxV.beginPath(); ctxV.arc(sh.x*w, sh.y*h, sh.r*w, 0, Math.PI*2); ctxV.stroke(); });
+            ctxV.setLineDash([]);
+        }
+
+        // ROTAS
+        const lSize = parseInt(document.getElementById('logo-size').value);
+        Object.keys(state.history).forEach(id => {
+            const pts = state.history[id]; if(pts.length < 1) return;
+            const color = ['#FF0000','#00FF00','#0080FF','#FFFF00','#FF00FF','#00FFFF','#FFA500','#CC00FF','#00FF7F','#FFD700','#FF69B4','#40E0D0'][id-1];
+            
+            ctxV.beginPath(); ctxV.strokeStyle = color; ctxV.lineWidth = 3;
+            ctxV.shadowBlur = 10; ctxV.shadowColor = color;
+            pts.forEach((p, i) => i===0 ? ctxV.moveTo(p.x*w, p.y*h) : ctxV.lineTo(p.x*w, p.y*h));
+            ctxV.stroke(); ctxV.shadowBlur = 0;
+
+            const p = state.animating ? getAnimPos(id) : pts[pts.length-1];
+            ctxV.fillStyle = "#fff"; ctxV.beginPath(); ctxV.arc(p.x*w, p.y*h, lSize, 0, Math.PI*2); ctxV.fill();
+            ctxV.strokeStyle = color; ctxV.lineWidth = 2; ctxV.stroke();
         });
 
-        // Clique no Mapa
-        document.getElementById('interaction-layer').onmousedown = (e) => {
-            const rect = e.target.getBoundingClientRect();
-            const nx = (e.clientX - rect.left) / rect.width;
-            const ny = (e.clientY - rect.top) / rect.height;
+        state.texts.forEach(t => { ctxV.fillStyle = "#fff"; ctxV.font = "bold 12px Arial"; ctxV.fillText("💬 "+t.text, t.x*w+10, t.y*h); });
+    }
 
-            if(state.mode === 'safe') {
-                state.safeHistory.push({ x: nx, y: ny, r: 0.2 });
-            } else if(state.mode === 'text') {
-                const t = prompt("Call:");
-                if(t) state.texts.push({ x: nx, y: ny, text: t });
-            } else {
-                state.history[slotsSelect.value].push({ x: nx, y: ny });
-            }
-            render();
-        };
+    function getAnimPos(id) {
+        const h = state.history[id]; if(h.length < 2) return h[h.length-1];
+        const prog = (state.animTime / 100) * (h.length - 1);
+        const i = Math.min(Math.floor(prog), h.length - 2);
+        const pct = prog - i;
+        return { x: h[i].x + (h[i+1].x - h[i].x) * pct, y: h[i].y + (h[i+1].y - h[i].y) * pct };
+    }
 
-        function draw() {
-            const w = canvas.width, h = canvas.height;
-            ctx.clearRect(0, 0, w, h);
-            
-            // Desenhar Gás (Abaixo de tudo)
-            if(state.showGas && state.safeHistory.length > 0) {
-                const lastSafe = state.safeHistory[state.safeHistory.length-1];
-                const gasRadius = (document.getElementById('gas-range').value / 100) * w;
-                
-                ctx.save();
-                ctx.beginPath();
-                ctx.rect(0,0,w,h);
-                ctx.arc(lastSafe.x*w, lastSafe.y*h, lastSafe.r*w + gasRadius, 0, Math.PI*2, true);
-                ctx.fillStyle = "rgba(0, 80, 255, 0.35)";
-                ctx.fill();
-                ctx.restore();
-            }
+    document.getElementById('start-replay').onclick = () => {
+        state.animating = true; state.animTime = 0;
+        document.getElementById('timeline-bar').style.display = 'block';
+        const loop = () => {
+            if(state.animTime < 100 && state.animating) {
+                state.animTime += 0.35; 
+                document.getElementById('timeline').value = state.animTime;
+                render(); requestAnimationFrame(loop);
+            } else { state.animating = false; render(); }
+        }; loop();
+    };
 
-            // Desenhar Safes
-            state.safeHistory.forEach(s => {
-                ctx.beginPath(); ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
-                ctx.setLineDash([5, 5]); ctx.arc(s.x*w, s.y*h, s.r*w, 0, Math.PI*2); ctx.stroke();
-                ctx.setLineDash([]);
-            });
+    document.getElementById('timeline').oninput = (e) => {
+        state.animating = true;
+        state.animTime = parseFloat(e.target.value);
+        render();
+        state.animating = false;
+    };
 
-            // Desenhar Rotas
-            const lSize = parseInt(document.getElementById('logo-size').value);
-            Object.keys(state.history).forEach(id => {
-                const hist = state.history[id];
-                if(hist.length < 1) return;
-                
-                const color = ['#FF0000','#00FF00','#0080FF','#FFFF00','#FF00FF','#00FFFF','#FFA500','#CC00FF','#00FF7F','#FFD700','#FF69B4','#40E0D0'][id-1];
-                
-                ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 3;
-                ctx.shadowBlur = 8; ctx.shadowColor = color;
-                hist.forEach((p, i) => i===0 ? ctx.moveTo(p.x*w, p.y*h) : ctx.lineTo(p.x*w, p.y*h));
-                ctx.stroke(); ctx.shadowBlur = 0;
+    document.getElementById('btn-save').onclick = () => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([JSON.stringify(state)], {type: "application/json"}));
+        a.download = "coach-tactical-v40.json"; a.click();
+    };
 
-                // Desenhar Cabeça (Ícone)
-                const p = state.animating ? getAnimPos(id) : hist[hist.length-1];
-                ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(p.x*w, p.y*h, lSize, 0, Math.PI*2); ctx.fill();
-                ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.stroke();
-            });
+    document.getElementById('btn-load').onclick = () => document.getElementById('load-file').click();
+    document.getElementById('load-file').onchange = (e) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => { Object.assign(state, JSON.parse(ev.target.result)); render(); };
+        reader.readAsText(e.target.files[0]);
+    };
 
-            // Desenhar Textos
-            state.texts.forEach(t => {
-                ctx.fillStyle = "white"; ctx.font = "bold 13px Inter";
-                ctx.fillText(`▶ ${t.text}`, t.x*w + 10, t.y*h);
-            });
-        }
+    document.getElementById('undo-btn').onclick = () => {
+        if(state.mode === 'safe') state.safeHistory.pop();
+        else if(state.mode === 'text') state.texts.pop();
+        else state.history[document.getElementById('team-slot').value].pop();
+        render();
+    };
 
-        function getAnimPos(id) {
-            const h = state.history[id];
-            if(h.length < 2) return h[0];
-            const prog = (state.animTime / 100) * (h.length - 1);
-            const i = Math.min(Math.floor(prog), h.length - 2);
-            const pct = prog - i;
-            return { x: h[i].x + (h[i+1].x - h[i].x) * pct, y: h[i].y + (h[i+1].y - h[i].y) * pct };
-        }
+    document.getElementById('gas-range').oninput = () => { state.animating = false; render(); };
+    document.getElementById('heat-opacity').oninput = render;
+    document.getElementById('logo-size').oninput = render;
+    document.getElementById('toggle-night').onclick = () => document.getElementById('game-map').style.filter = 
+        document.getElementById('game-map').style.filter.includes('hue-rotate') ? 'brightness(0.7)' : 'brightness(0.6) contrast(1.2) hue-rotate(180deg) saturate(1.5)';
 
-        document.getElementById('start-replay').onclick = () => {
-            state.animating = true; state.animTime = 0;
-            document.getElementById('timeline-bar').style.display = 'block';
-            const run = () => {
-                if(state.animTime < 100 && state.animating) {
-                    state.animTime += 0.4;
-                    document.getElementById('timeline').value = state.animTime;
-                    render(); requestAnimationFrame(run);
-                }
-            };
-            run();
-        };
+    function render() { drawHeat(); drawVectors(); }
+</script>
 
-        document.getElementById('timeline').oninput = (e) => {
-            state.animating = true;
-            state.animTime = parseFloat(e.target.value);
-            render();
-            state.animating = false;
-        };
-
-        document.getElementById('gas-range').oninput = render;
-        document.getElementById('undo-btn').onclick = () => {
-            if(state.mode === 'safe') state.safeHistory.pop();
-            else if(state.mode === 'text') state.texts.pop();
-            else state.history[slotsSelect.value].pop();
-            render();
-        };
-
-        function render() { draw(); }
-    </script>
 </body>
 </html>
