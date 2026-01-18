@@ -2,279 +2,308 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>COACH LIPEE - TACTICAL V45 ULTRA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COACH LIPEE - V43 ULTRA HEAT</title>
     <style>
-        :root { --neon: #00FF00; --bg: #050505; --card: #121214; --border: #2a2a2e; --red: #ff4d4d; --alert: #2ecc71; }
-        body { background: var(--bg); margin: 0; font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; }
-        
-        #main-app { display: grid; grid-template-columns: 320px 1fr; height: 100vh; }
-        
-        /* Sidebar */
-        #sidebar { background: var(--card); border-right: 1px solid var(--border); padding: 15px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; z-index: 100; }
+        :root { --neon: #00FF00; --bg: #0a0a0b; --card: #151517; --border: #2a2a2e; }
+        body { background: var(--bg); margin: 0; font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; height: 100vh; }
+        #main-app { display: grid; grid-template-columns: 320px 1fr; height: 100%; }
+        #sidebar { background: var(--card); border-right: 1px solid var(--border); padding: 15px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
         .tool-card { background: #1c1c1f; border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
-        .tool-card h4 { margin: 0 0 8px 0; font-size: 10px; color: var(--neon); text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* Controles */
-        .btn { background: #252529; border: none; color: #a0a0a5; padding: 8px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: 900; transition: 0.2s; text-align: center; text-transform: uppercase; }
-        .btn:hover { background: #303035; color: #fff; }
+        .tool-card h4 { margin: 0 0 8px 0; font-size: 11px; color: var(--neon); text-transform: uppercase; }
+        .btn { background: #252529; border: none; color: #a0a0a5; padding: 8px; border-radius: 5px; cursor: pointer; font-size: 11px; font-weight: 600; width: 100%; margin-bottom: 4px; }
         .btn.active { background: var(--neon) !important; color: #000 !important; }
-        .btn-alert.active { background: var(--alert) !important; color: #000 !important; }
         
-        input, select, textarea { background: #0a0a0b; border: 1px solid var(--border); color: #fff; padding: 5px; border-radius: 4px; font-size: 11px; width: 100%; box-sizing: border-box; }
-        
-        /* Map Area */
         #viewport { position: relative; background: #000; display: flex; justify-content: center; align-items: center; overflow: hidden; }
-        #map-container { position: relative; line-height: 0; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
-        #game-map { max-width: 90vw; max-height: 80vh; display: block; filter: brightness(0.5); border-radius: 4px; }
-        .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        #interaction-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: crosshair; z-index: 50; pointer-events: all; }
+        #map-container { position: relative; line-height: 0; }
+        #game-map { max-width: 92vw; max-height: 82vh; display: block; }
         
-        /* Modal */
-        #alert-modal { 
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            background: #111; padding: 20px; border: 2px solid var(--alert); z-index: 200; 
-            border-radius: 8px; width: 280px; box-shadow: 0 0 30px #000;
-        }
-
-        #timeline-bar { 
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); 
-            width: 60%; background: rgba(0,0,0,0.9); padding: 15px; border-radius: 40px; 
-            display: none; border: 1px solid var(--neon); z-index: 100; align-items: center; gap: 10px; 
-        }
+        .night-vision #game-map { filter: brightness(0.4) contrast(1.2) sepia(1) hue-rotate(80deg) saturate(2.5) !important; }
+        
+        .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        #interaction-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; pointer-events: all; cursor: crosshair; }
+        
+        /* Ajuste de opacidade para o Heatmap aparecer mais */
+        #heatmap-layer { z-index: 5; opacity: 0.9; mix-blend-mode: screen; }
+        #vector-layer { z-index: 10; }
+        
+        #timeline-bar { position: absolute; bottom: 20px; width: 80%; background: rgba(0,0,0,0.95); padding: 15px; border-radius: 10px; border: 1px solid var(--neon); display: none; z-index: 150; text-align: center; }
+        .input-dark { background: #0a0a0b; border: 1px solid var(--border); color: white; padding: 6px; border-radius: 4px; width: 100%; box-sizing: border-box; font-size: 12px; margin-bottom: 5px; }
+        label { font-size: 9px; color: var(--neon); font-weight: bold; display: block; margin: 4px 0; }
     </style>
 </head>
 <body>
 
-<div id="alert-modal">
-    <h3 style="color:var(--alert); margin:0 0 10px 0; font-size:14px;">⚠️ NOVO AVISO TÁTICO</h3>
-    <textarea id="alert-text" placeholder="Ex: Cuidado com o guarita, Mina terrestre, etc..." rows="3"></textarea>
-    <div style="display:flex; gap:5px; margin-top:10px;">
-        <button class="btn" style="background:var(--alert); color:black; flex:1" id="save-alert">SALVAR</button>
-        <button class="btn" style="background:#444; color:white; flex:1" onclick="closeModal()">CANCELAR</button>
-    </div>
-</div>
-
 <div id="main-app">
     <div id="sidebar">
-        <h2 style="color:var(--neon); margin:0; text-align: center; font-weight: 900; letter-spacing: -1px;">COACH LIPEE V45</h2>
+        <h2 style="color:var(--neon); text-align:center; margin:0; font-size: 18px;">COACH LIPEE</h2>
         
         <div class="tool-card">
-            <h4>🗺️ MAPA</h4>
-            <select id="map-select">
-                <option value="https://i.imgur.com/8QOInU9.jpeg">Bermuda</option>
-                <option value="https://i.imgur.com/R3t6f4D.jpeg">Purgatório</option>
-                <option value="https://i.imgur.com/vH9Z3tM.jpeg">Alpine</option>
-            </select>
+            <h4>🗺️ MAPA & VISÃO</h4>
+            <input type="file" id="up-map" accept="image/*" class="input-dark">
+            <button class="btn" id="toggle-night">🌙 VISÃO NO ESCURO: OFF</button>
         </div>
 
         <div class="tool-card">
-            <h4>🔥 MAPA DE CALOR</h4>
-            <label style="font-size:9px">RAIO</label>
-            <input type="range" id="heat-radius" min="10" max="150" value="40">
-            <input type="range" id="heat-opacity" min="0.1" max="1.0" step="0.1" value="0.6" style="margin-top:5px">
-        </div>
-
-        <div class="tool-card">
-            <h4>⏱️ FERRAMENTAS</h4>
-            <label style="font-size:9px">PRÓXIMO MINUTO</label>
-            <input type="number" id="manual-min" value="0" step="0.5" style="margin-bottom:8px">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px">
+            <h4>🛡️ MODOS</h4>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
                 <button class="btn btn-mode active" id="mode-route">ROTA</button>
                 <button class="btn btn-mode" id="mode-safe">SAFE</button>
-                <button class="btn btn-mode btn-alert" id="mode-alert" style="grid-column: span 2; border: 1px solid var(--alert); color: var(--alert);">⚠️ ADICIONAR AVISO</button>
+                <button class="btn btn-mode" id="mode-gas">GÁS V45</button>
+                <button class="btn" onclick="undo()" style="background:#c0392b; color:white;">VOLTAR</button>
             </div>
+            <label>TEMPO DE AÇÃO (MM:SS)</label>
+            <input type="text" id="manual-time" value="00:00" class="input-dark">
         </div>
 
-        <button class="btn" id="play-btn" style="background:var(--neon); color:black; font-size:12px">▶️ INICIAR REPLAY</button>
-        <button class="btn" style="background:var(--red); color:white" onclick="location.reload()">🗑️ LIMPAR TUDO</button>
+        <div class="tool-card">
+            <h4>🔥 HEATMAP (CALOR ALTO)</h4>
+            <label>INTENSIDADE/RAIO</label>
+            <input type="range" id="heat-radius" min="10" max="100" value="45" style="width:100%">
+            <button class="btn" onclick="clearHeat()">LIMPAR CALOR</button>
+        </div>
 
-        <div class="tool-card" style="flex-grow: 1; margin-top: 10px;">
-            <h4>📋 STATUS</h4>
-            <div id="hud-stats" style="font-size:10px; line-height:1.6">
-                PONTOS: <span id="st-pts">0</span><br>
-                AVISOS: <span id="st-alerts">0</span><br>
-                TEMPO TOTAL: <span id="st-time">0</span>m
-            </div>
+        <div class="tool-card">
+            <h4>🎮 TIME & LOGO</h4>
+            <select id="team-slot" class="input-dark"></select>
+            <input type="text" id="team-tag" placeholder="TAG" class="input-dark">
+            <input type="file" id="up-logo" accept="image/*" class="input-dark">
+            <label>TAMANHO DA LOGO</label>
+            <input type="range" id="logo-size" min="15" max="60" value="34" style="width:100%">
+        </div>
+
+        <div class="tool-card">
+            <h4>⏩ REPLAY</h4>
+            <select id="replay-speed" class="input-dark">
+                <option value="1">1x</option>
+                <option value="2">2x</option>
+                <option value="4">4x</option>
+            </select>
+            <button class="btn" id="start-replay" style="background:var(--neon); color:black; font-weight:bold;">▶️ INICIAR ANÁLISE</button>
         </div>
     </div>
 
     <div id="viewport">
         <div id="map-container">
-            <img id="game-map" src="https://i.imgur.com/8QOInU9.jpeg">
+            <img id="game-map" src="">
             <canvas id="heatmap-layer" class="layer"></canvas>
             <canvas id="vector-layer" class="layer"></canvas>
             <div id="interaction-layer"></div>
-            <div id="marker" style="position:absolute; width:14px; height:14px; background:var(--neon); border-radius:50%; display:none; transform:translate(-50%,-50%); box-shadow:0 0 20px var(--neon); z-index:60; border:2px solid white;"></div>
         </div>
-
         <div id="timeline-bar">
-            <span id="time-display" style="font-family:monospace; color:var(--neon); font-size:18px; font-weight:bold">00:00</span>
-            <div style="color:white; font-size:10px; text-transform:uppercase">Minutos de Rotação</div>
+            <div id="time-viewer" style="color:var(--neon); font-weight:bold; font-size: 20px;">00:00</div>
+            <input type="range" id="timeline-slider" min="0" max="0" step="0.1" value="0" style="width:90%">
         </div>
     </div>
 </div>
 
 <script>
-    const state = { points: [], safes: [], alerts: [], mode: 'route', mapLoaded: false, pendingCoord: null };
-    const PALETTE = [[0,0,255], [0,104,55], [26,152,80], [166,217,106], [217,239,139], [254,224,139], [253,174,97], [244,109,67], [215,48,39], [165,0,38]];
+const state = {
+    mapLoaded: false, mode: 'route', activeSlot: 1, animating: false, nightMode: false,
+    teams: {}, history: {}, safeHistory: [], gasHistory: [], 
+    maxSeconds: 0, animId: null, startTime: 0
+};
+
+const vCanvas = document.getElementById('vector-layer');
+const hCanvas = document.getElementById('heatmap-layer');
+const vCtx = vCanvas.getContext('2d');
+const hCtx = hCanvas.getContext('2d');
+const teamColors = ['#FF0000','#00FF00','#0080FF','#FFFF00','#FF00FF','#00FFFF','#FFA500','#CC00FF','#00FF7F','#FFD700','#FF69B4','#40E0D0'];
+
+for(let i=1; i<=12; i++) {
+    state.teams[i] = { tag: `TIME ${i}`, color: teamColors[i-1], logo: null };
+    state.history[i] = [];
+    document.getElementById('team-slot').add(new Option(`Time ${i}`, i));
+}
+
+function timeToSec(str) {
+    const p = str.split(':');
+    return (parseInt(p[0]) * 60) + (parseInt(p[1] || 0));
+}
+
+function secToTime(sec) {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = Math.floor(sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+// HEATMAP COM CORES FORTES E VIVAS
+function drawHeatmap() {
+    hCtx.clearRect(0, 0, hCanvas.width, hCanvas.height);
+    const radius = parseInt(document.getElementById('heat-radius').value);
     
-    const img = document.getElementById('game-map');
-    const cHeat = document.getElementById('heatmap-layer');
-    const cVector = document.getElementById('vector-layer');
-    const ctxHeat = cHeat.getContext('2d');
-    const ctxVector = cVector.getContext('2d');
-    const marker = document.getElementById('marker');
+    Object.keys(state.history).forEach(id => {
+        state.history[id].forEach(p => {
+            const x = p.x * hCanvas.width;
+            const y = p.y * hCanvas.height;
+            const grad = hCtx.createRadialGradient(x, y, 0, x, y, radius);
+            
+            // Cores mais densas para parecer "quente"
+            grad.addColorStop(0, 'rgba(255, 0, 0, 0.8)');    // Vermelho Intenso
+            grad.addColorStop(0.3, 'rgba(255, 120, 0, 0.5)'); // Laranja
+            grad.addColorStop(0.6, 'rgba(255, 255, 0, 0.3)'); // Amarelo
+            grad.addColorStop(1, 'rgba(0, 255, 0, 0)');       // Verde sumindo
+            
+            hCtx.fillStyle = grad;
+            hCtx.beginPath();
+            hCtx.arc(x, y, radius, 0, Math.PI * 2);
+            hCtx.fill();
+        });
+    });
+}
 
-    function resize() {
-        const rect = img.getBoundingClientRect();
-        cHeat.width = cVector.width = rect.width;
-        cHeat.height = cVector.height = rect.height;
+function getPosAtTime(history, currentSec) {
+    if (history.length === 0) return null;
+    if (currentSec <= history[0].time) return history[0];
+    if (currentSec >= history[history.length - 1].time) return history[history.length - 1];
+    for (let i = 0; i < history.length - 1; i++) {
+        const p1 = history[i], p2 = history[i + 1];
+        if (currentSec >= p1.time && currentSec <= p2.time) {
+            const ratio = (currentSec - p1.time) / (p2.time - p1.time || 1);
+            return { x: p1.x + (p2.x - p1.x) * ratio, y: p1.y + (p2.y - p1.y) * ratio, time: currentSec };
+        }
+    }
+}
+
+function render(currentSec = null) {
+    if(!state.mapLoaded) return;
+    vCtx.clearRect(0, 0, vCanvas.width, vCanvas.height);
+    drawHeatmap();
+    
+    const w = vCanvas.width, h = vCanvas.height;
+    const logoS = parseInt(document.getElementById('logo-size').value);
+
+    // Safes
+    state.safeHistory.forEach(s => {
+        vCtx.beginPath(); vCtx.arc(s.x*w, s.y*h, s.r*w, 0, Math.PI*2);
+        vCtx.strokeStyle = "#f1c40f"; vCtx.setLineDash([5,5]); vCtx.lineWidth = 2; vCtx.stroke(); vCtx.setLineDash([]);
+    });
+
+    // Times
+    Object.keys(state.history).forEach(id => {
+        const hist = state.history[id];
+        if (hist.length === 0) return;
+        const team = state.teams[id];
+        
+        vCtx.beginPath(); vCtx.strokeStyle = team.color; vCtx.lineWidth = 2;
+        hist.forEach((p, i) => i === 0 ? vCtx.moveTo(p.x*w, p.y*h) : vCtx.lineTo(p.x*w, p.y*h));
+        vCtx.stroke();
+
+        const p = currentSec !== null ? getPosAtTime(hist, currentSec) : hist[hist.length-1];
+        if(!p) return;
+
+        vCtx.fillStyle = "white"; vCtx.beginPath(); vCtx.arc(p.x*w, p.y*h, logoS/2 + 2, 0, Math.PI*2); vCtx.fill();
+        if(team.logo) {
+            vCtx.save(); vCtx.beginPath(); vCtx.arc(p.x*w, p.y*h, logoS/2, 0, Math.PI*2); vCtx.clip();
+            vCtx.drawImage(team.logo, p.x*w - logoS/2, p.y*h - logoS/2, logoS, logoS); vCtx.restore();
+        } else {
+            vCtx.fillStyle = team.color; vCtx.beginPath(); vCtx.arc(p.x*w, p.y*h, logoS/2, 0, Math.PI*2); vCtx.fill();
+        }
+
+        vCtx.textAlign = "center";
+        vCtx.fillStyle = "white"; vCtx.font = "bold 12px Arial";
+        vCtx.fillText(team.tag, p.x*w, p.y*h - (logoS/2 + 8));
+        vCtx.fillStyle = team.color;
+        vCtx.fillText(secToTime(currentSec || p.time), p.x*w, p.y*h - (logoS/2 + 22));
+    });
+}
+
+function animate(timestamp) {
+    if (!state.animating) return;
+    if (!state.startTime) state.startTime = timestamp;
+    
+    const slider = document.getElementById('timeline-slider');
+    const speed = parseFloat(document.getElementById('replay-speed').value);
+    let elapsed = (timestamp - state.startTime) / 1000 * speed;
+    
+    if (elapsed > state.maxSeconds) {
+        state.startTime = timestamp;
+        elapsed = 0;
+    }
+    
+    slider.value = elapsed;
+    document.getElementById('time-viewer').innerText = secToTime(elapsed);
+    render(elapsed);
+    state.animId = requestAnimationFrame(animate);
+}
+
+document.getElementById('start-replay').onclick = function() {
+    state.animating = !state.animating;
+    this.innerText = state.animating ? "⏹️ PARAR REPLAY" : "▶️ INICIAR ANÁLISE";
+    document.getElementById('timeline-bar').style.display = state.animating ? "block" : "none";
+    if (state.animating) {
+        state.startTime = 0;
+        document.getElementById('timeline-slider').max = state.maxSeconds;
+        state.animId = requestAnimationFrame(animate);
+    } else {
+        cancelAnimationFrame(state.animId);
         render();
     }
-    img.onload = () => { state.mapLoaded = true; resize(); };
-    window.onresize = resize;
+};
 
-    function render() {
-        if(!state.mapLoaded) return;
-        
-        // 1. HEATMAP (Regra V36)
-        const w = cHeat.width, h = cHeat.height;
-        const radius = parseInt(document.getElementById('heat-radius').value);
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = w * 0.5; tempCanvas.height = h * 0.5;
-        const tctx = tempCanvas.getContext('2d');
-        tctx.fillStyle = "rgb(0,0,255)"; tctx.fillRect(0,0,tempCanvas.width,tempCanvas.height);
-        tctx.globalCompositeOperation = "lighter";
-        state.points.forEach(p => {
-            let g = tctx.createRadialGradient(p.x*tempCanvas.width, p.y*tempCanvas.height, 0, p.x*tempCanvas.width, p.y*tempCanvas.height, radius/2);
-            g.addColorStop(0, "rgba(255,255,255,0.5)"); g.addColorStop(1, "rgba(255,255,255,0)");
-            tctx.fillStyle = g; tctx.beginPath(); tctx.arc(p.x*tempCanvas.width, p.y*tempCanvas.height, radius/2, 0, Math.PI*2); tctx.fill();
-        });
-        const d = tctx.getImageData(0,0,tempCanvas.width,tempCanvas.height);
-        for(let i=0; i<d.data.length; i+=4) {
-            const c = PALETTE[Math.min(9, Math.floor((d.data[i]/255)*12))] || PALETTE[0];
-            d.data[i] = c[0]; d.data[i+1] = c[1]; d.data[i+2] = c[2];
-        }
-        tctx.putImageData(d, 0, 0);
-        ctxHeat.clearRect(0,0,w,h);
-        ctxHeat.globalAlpha = parseFloat(document.getElementById('heat-opacity').value);
-        ctxHeat.drawImage(tempCanvas, 0, 0, w, h);
+const inter = document.getElementById('interaction-layer');
+inter.onmousedown = e => {
+    if(!state.mapLoaded) return;
+    const rect = inter.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width, y = (e.clientY - rect.top) / rect.height;
+    const sec = timeToSec(document.getElementById('manual-time').value);
 
-        // 2. VETORES E AVISOS (Regra V36)
-        ctxVector.clearRect(0,0,w,h);
-        
-        // Linhas de Rota
-        if(state.points.length > 1) {
-            ctxVector.strokeStyle = "#00FF00"; ctxVector.lineWidth = 2; ctxVector.setLineDash([5, 3]);
-            ctxVector.beginPath();
-            state.points.forEach((p, i) => {
-                if(i === 0) ctxVector.moveTo(p.x*w, p.y*h); else ctxVector.lineTo(p.x*w, p.y*h);
-            });
-            ctxVector.stroke(); ctxVector.setLineDash([]);
-        }
-
-        // Pontos e Minutos
-        state.points.forEach(p => {
-            ctxVector.fillStyle = "#00FF00"; ctxVector.beginPath(); ctxVector.arc(p.x*w, p.y*h, 3, 0, Math.PI*2); ctxVector.fill();
-            ctxVector.fillStyle = "white"; ctxVector.font = "bold 10px Arial";
-            ctxVector.fillText(p.time + "m", p.x*w + 5, p.y*h - 5);
-        });
-
-        // Avisos (Bolinha Verde V36)
-        state.alerts.forEach(a => {
-            ctxVector.fillStyle = "#2ecc71"; ctxVector.beginPath(); ctxVector.arc(a.x*w, a.y*h, 10, 0, Math.PI*2); ctxVector.fill();
-            ctxVector.fillStyle = "black"; ctxVector.font = "bold 12px Arial"; ctxVector.textAlign = "center";
-            ctxVector.fillText("!", a.x*w, a.y*h + 4);
-            ctxVector.fillStyle = "white"; ctxVector.font = "9px Arial";
-            ctxVector.fillText(a.text, a.x*w, a.y*h + 20);
-            ctxVector.textAlign = "left";
-        });
-
-        // Safes
-        state.safes.forEach(s => {
-            ctxVector.strokeStyle = "white"; ctxVector.lineWidth = 2;
-            ctxVector.beginPath(); ctxVector.arc(s.x*w, s.y*h, 45, 0, Math.PI*2); ctxVector.stroke();
-        });
-
-        // Atualizar HUD
-        document.getElementById('st-pts').innerText = state.points.length;
-        document.getElementById('st-alerts').innerText = state.alerts.length;
-        document.getElementById('st-time').innerText = state.points.length ? state.points[state.points.length-1].time : 0;
+    if(state.mode === 'route') {
+        state.history[state.activeSlot].push({x, y, time: sec});
+        if(sec > state.maxSeconds) state.maxSeconds = sec;
+    } else if(state.mode === 'safe') {
+        state.safeHistory.push({x, y, r: 0.1, time: sec});
     }
+    render();
+};
 
-    document.getElementById('interaction-layer').onclick = (e) => {
-        const rect = img.getBoundingClientRect();
-        const nx = (e.clientX - rect.left) / rect.width;
-        const ny = (e.clientY - rect.top) / rect.height;
+document.getElementById('toggle-night').onclick = function() {
+    state.nightMode = !state.nightMode;
+    document.getElementById('map-container').classList.toggle('night-vision', state.nightMode);
+    this.innerText = state.nightMode ? "🌙 VISÃO NO ESCURO: ON" : "🌙 VISÃO NO ESCURO: OFF";
+    this.style.background = state.nightMode ? "var(--neon)" : "#252529";
+    this.style.color = state.nightMode ? "#000" : "#a0a0a5";
+};
 
-        if(state.mode === 'route') {
-            const t = parseFloat(document.getElementById('manual-min').value);
-            state.points.push({x: nx, y: ny, time: t});
-            document.getElementById('manual-min').value = t + 0.5;
-        } else if(state.mode === 'safe') {
-            state.safes.push({x: nx, y: ny});
-        } else if(state.mode === 'alert') {
-            state.pendingCoord = {x: nx, y: ny};
-            document.getElementById('alert-modal').style.display = 'block';
-        }
-        render();
-    };
-
-    document.getElementById('save-alert').onclick = () => {
-        const txt = document.getElementById('alert-text').value;
-        if(txt) {
-            state.alerts.push({...state.pendingCoord, text: txt});
-            closeModal();
+document.getElementById('up-map').onchange = e => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+        document.getElementById('game-map').src = ev.target.result;
+        document.getElementById('game-map').onload = () => {
+            state.mapLoaded = true;
+            hCanvas.width = vCanvas.width = document.getElementById('game-map').clientWidth;
+            hCanvas.height = vCanvas.height = document.getElementById('game-map').clientHeight;
             render();
-        }
+        };
     };
+    reader.readAsDataURL(e.target.files[0]);
+};
 
-    function closeModal() { 
-        document.getElementById('alert-modal').style.display = 'none'; 
-        document.getElementById('alert-text').value = '';
-    }
-
-    document.getElementById('play-btn').onclick = () => {
-        if(state.points.length < 2) return;
-        marker.style.display = 'block';
-        document.getElementById('timeline-bar').style.display = 'flex';
-        const totalMin = state.points[state.points.length-1].time;
-        const start = performance.now();
-
-        function frame() {
-            const elapsed = (performance.now() - start) / 1000; 
-            if(elapsed > totalMin) {
-                document.getElementById('timeline-bar').style.display = 'none';
-                marker.style.display = 'none';
-                return;
-            }
-
-            for(let i=0; i<state.points.length-1; i++) {
-                const p1 = state.points[i], p2 = state.points[i+1];
-                if(elapsed >= p1.time && elapsed <= p2.time) {
-                    const pct = (elapsed - p1.time) / (p2.time - p1.time);
-                    marker.style.left = ((p1.x + (p2.x - p1.x) * pct) * img.clientWidth) + "px";
-                    marker.style.top = ((p1.y + (p2.y - p1.y) * pct) * img.clientHeight) + "px";
-                    document.getElementById('time-display').innerText = Math.floor(elapsed) + "m" + Math.floor((elapsed%1)*60).toString().padStart(2,'0') + "s";
-                }
-            }
-            requestAnimationFrame(frame);
-        }
-        frame();
+document.getElementById('up-logo').onchange = e => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+        const img = new Image(); img.src = ev.target.result;
+        img.onload = () => { state.teams[state.activeSlot].logo = img; render(); };
     };
+    reader.readAsDataURL(e.target.files[0]);
+};
 
-    // UI Switches
-    const setMode = (m, btnId) => {
-        state.mode = m;
+document.querySelectorAll('.btn-mode').forEach(btn => {
+    btn.onclick = function() {
         document.querySelectorAll('.btn-mode').forEach(b => b.classList.remove('active'));
-        document.getElementById(btnId).classList.add('active');
+        this.classList.add('active'); state.mode = this.id.replace('mode-', '');
     };
-    document.getElementById('mode-route').onclick = () => setMode('route', 'mode-route');
-    document.getElementById('mode-safe').onclick = () => setMode('safe', 'mode-safe');
-    document.getElementById('mode-alert').onclick = () => setMode('alert', 'mode-alert');
-    document.getElementById('heat-radius').oninput = render;
-    document.getElementById('heat-opacity').oninput = render;
-    document.getElementById('map-select').onchange = (e) => img.src = e.target.value;
+});
+
+document.getElementById('team-slot').onchange = e => {
+    state.activeSlot = e.target.value;
+    document.getElementById('team-tag').value = state.teams[state.activeSlot].tag;
+};
+document.getElementById('team-tag').oninput = e => { state.teams[state.activeSlot].tag = e.target.value; render(); };
+function undo() { state.history[state.activeSlot].pop(); render(); }
+function clearHeat() { Object.keys(state.history).forEach(i => state.history[i] = []); render(); }
+document.getElementById('logo-size').oninput = render;
+document.getElementById('heat-radius').oninput = render;
 </script>
 </body>
 </html>
