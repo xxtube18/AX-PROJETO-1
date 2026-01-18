@@ -240,14 +240,27 @@
                 const displayTime = animTeams && animTeams[id] ? animTeams[id].time : hist[hist.length-1].time;
                 if(pos) {
                     ctxs.vector.save();
+                    
+                    // FUNDO DO ICONE (Alterado para Branco/Cinza claro para destacar logos pretos)
                     ctxs.vector.shadowBlur = 15; ctxs.vector.shadowColor = team.color;
-                    ctxs.vector.fillStyle = "black"; ctxs.vector.beginPath(); ctxs.vector.arc(pos.x*w, pos.y*h, 15, 0, Math.PI*2); ctxs.vector.fill();
-                    ctxs.vector.strokeStyle = team.color; ctxs.vector.lineWidth = 2; ctxs.vector.stroke();
-                    if(logos[id]) ctxs.vector.drawImage(logos[id], pos.x*w-11, pos.y*h-11, 22, 22);
-                    else {
-                        ctxs.vector.fillStyle = "white"; ctxs.vector.font = "bold 10px Arial"; ctxs.vector.textAlign = "center"; ctxs.vector.textBaseline = "middle";
+                    ctxs.vector.fillStyle = "#f0f0f0"; // COR DE FUNDO NEUTRA
+                    ctxs.vector.beginPath(); ctxs.vector.arc(pos.x*w, pos.y*h, 15, 0, Math.PI*2); ctxs.vector.fill();
+                    
+                    // BORDA COM A COR DO TIME
+                    ctxs.vector.strokeStyle = team.color; 
+                    ctxs.vector.lineWidth = 3; 
+                    ctxs.vector.stroke();
+
+                    if(logos[id]) {
+                        // Desenha o logo centralizado
+                        ctxs.vector.drawImage(logos[id], pos.x*w-11, pos.y*h-11, 22, 22);
+                    } else {
+                        // Texto da Tag caso não tenha logo
+                        ctxs.vector.fillStyle = "black"; 
+                        ctxs.vector.font = "bold 10px Arial"; ctxs.vector.textAlign = "center"; ctxs.vector.textBaseline = "middle";
                         ctxs.vector.fillText(team.tag, pos.x*w, pos.y*h);
                     }
+
                     if(state.showTimer && displayTime !== undefined) {
                         ctxs.vector.fillStyle = team.color; ctxs.vector.font = "bold 12px Segoe UI"; ctxs.vector.shadowBlur = 5; ctxs.vector.shadowColor = "black";
                         ctxs.vector.fillText(`${displayTime}m`, pos.x*w, pos.y*h - 25);
